@@ -4,6 +4,7 @@ import { ApiError } from './api';
 import { fetchCurrentDelivery, performDeliveryAction } from './deliveries';
 import { fetchMyDriver, goOffline, goOnline, registerVehicle } from './drivers';
 import { clearSession, setSession } from './session';
+import { reportLocation } from './tracking';
 
 const driverToken = [
   Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url'),
@@ -78,5 +79,14 @@ describe('driver API', () => {
 
     await performDeliveryAction('del-1', action);
     expect(lastCall()).toMatchObject({ url: expect.stringMatching(new RegExp(`/api/deliveries/del-1/${action}$`)), method: 'POST' });
+  });
+
+  it("reports the driver's location with only the coordinates (the driver comes from the token)", async () => {
+    fetchMock.mockResolvedValue(respond(201, { userId: 'driver-user-1', latitude: 30.0444, longitude: 31.2357 }));
+
+    await reportLocation({ latitude: 30.0444, longitude: 31.2357 });
+    expect(lastCall()).toMatchObject({ url: expect.stringMatching(/\/api\/tracking\/location$/), method: 'POST', auth: `Bearer ${driverToken}` });
+    const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ latitude: 30.0444, longitude: 31.2357 });
   });
 });

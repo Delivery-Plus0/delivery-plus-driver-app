@@ -38,7 +38,7 @@ Tear down with `npm run e2e:env:down` (in `delivery-plus`; removes the E2E volum
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
 | `smoke` | QA driver signs in and sees vehicle + status · goes online (waiting for a job) and offline again · a new driver signs up, registers a vehicle and lands Offline | every PR |
-| `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off and items → pickup → start → complete → back to waiting → the customer's order is DELIVERED | nightly / manual |
+| `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off and items → the app shares its location and the customer's tracking view shows it → pickup → start → complete → back to waiting → the customer's order is DELIVERED | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)
 
@@ -61,7 +61,13 @@ Password: `E2E_PASSWORD` (test-only default `Qa-Only-Passw0rd!`). The customer's
 - `scenario/order-ready`: act as the **customer** (cart → order → payment) and the **restaurant**
   (preparing → ready) through the real gateway. These are stand-ins; the customer app covers its
   side in its own suite. Dispatch is not a stand-in: delivery-service assigns the online driver.
+- `tracking/assert-location`: cross-app check that `GET /api/tracking/delivery/:id`, read as the
+  customer, returns the position the driver app sent.
 - `order/assert-delivered`: cross-app check that the customer's order is DELIVERED.
+
+The web build reports a fixed position (`EXPO_PUBLIC_FIXED_LOCATION=30.0444,31.2357`, set by the
+runner) because Maestro's web driver can neither grant geolocation permission nor fake it
+(`setLocation` fails on web with a CDP version error).
 
 After the suite the runner finishes any leftover delivery and leaves the QA driver AVAILABLE (the
 seed's state), because the customer app's flows depend on it. Between flows it clears
@@ -82,5 +88,5 @@ Controls carry `testID` and `nativeID` with the same value (see the shared UI co
 
 ## Not covered yet
 
-- Android emulator / iOS simulator runs (web only today).
-- Location sharing while on a delivery (#99 step 6).
+- Android emulator / iOS simulator runs (web only today), and so the real device-location path.
+- The permission-denied state (it needs a browser or device that refuses geolocation).

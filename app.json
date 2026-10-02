@@ -33,7 +33,13 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Delivery Plus Driver shares your location with the customer while you are on a delivery."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

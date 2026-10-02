@@ -35,6 +35,7 @@ const PROJECT = process.env.E2E_COMPOSE_PROJECT ?? 'delivery-plus-e2e';
 const WEB_BUILD = join(E2E_DIR, '.web-build');
 const SCREEN_SIZE = process.env.E2E_SCREEN_SIZE ?? '430x1600';
 const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
+const FIXED_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
 
 const SUITES = {
   smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml'],
@@ -152,6 +153,19 @@ const actions = {
     await api('PATCH', `/api/orders/${order.id}/status`, owner, { status: 'READY_FOR_PICKUP' });
     state.orderId = order.id;
   },
+  // Cross-app assertion: the customer's tracking view shows the position the driver app sent.
+  'tracking/assert-location': async () => {
+    const customer = await login(manifest.accounts.customer.email);
+    const delivery = await api('GET', `/api/deliveries/by-order/${state.orderId}`, customer);
+    const deadline = Date.now() + 20_000;
+    for (;;) {
+      const tracking = await api('GET', `/api/tracking/delivery/${delivery.id}`, customer);
+      const { latitude, longitude } = tracking.location ?? {};
+      if (latitude === FIXED_LOCATION.latitude && longitude === FIXED_LOCATION.longitude) return;
+      if (Date.now() > deadline) throw new Error(`No driver location for delivery ${delivery.id} (got ${JSON.stringify(tracking.location)})`);
+      await new Promise((r) => setTimeout(r, 1_000));
+    }
+  },
   // Cross-app assertion: the order the driver delivered in the UI is DELIVERED for the customer.
   'order/assert-delivered': async () => {
     const customer = await login(manifest.accounts.customer.email);
@@ -181,7 +195,8 @@ function buildWeb() {
     cwd: APP_DIR,
     stdio: 'inherit',
     shell: process.platform === 'win32',
-    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: API_URL },
+    // Maestro's web driver can't grant or fake geolocation, so the E2E build reports a fixed position.
+    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: API_URL, EXPO_PUBLIC_FIXED_LOCATION: `${FIXED_LOCATION.latitude},${FIXED_LOCATION.longitude}` },
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }

@@ -34,6 +34,17 @@ tags:
 - assertVisible: '1 Test Street, Apt 1'
 - assertVisible: '.*QA Pasta'
 
+# While on the job the app sends its position (fixed in the E2E build), and the customer can see it.
+- extendedWaitUntil:
+    visible:
+      id: location-status
+      text: Sharing your location with the customer
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: tracking/assert-location
+
 - tapOn:
     id: delivery-action-pickup
 - extendedWaitUntil:
