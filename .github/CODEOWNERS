@@ -1,0 +1,7 @@
+# Default owner for everything in the driver app.
+* @Yousefa7medmaher
+
+# Build, CI and E2E infrastructure.
+/.github/ @Yousefa7medmaher
+/app.json @Yousefa7medmaher
+/SECURITY.md @Yousefa7medmaher
