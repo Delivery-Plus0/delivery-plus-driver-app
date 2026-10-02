@@ -1,0 +1,20 @@
+url: ${APP_URL}
+name: Driver signs in and sees their vehicle and status
+tags:
+  - smoke
+---
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: driver/reset
+- runFlow: ../_shared/login.yaml
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 20000
+- assertVisible:
+    id: driver-status
+    text: Offline
+- assertVisible: 'Bicycle · QA-0001'
+- assertVisible:
+    id: go-online

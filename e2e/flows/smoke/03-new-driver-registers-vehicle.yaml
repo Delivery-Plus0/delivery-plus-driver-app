@@ -1,0 +1,45 @@
+url: ${APP_URL}/register
+name: A new driver signs up and registers a vehicle before going online
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: register-full-name
+    timeout: 20000
+- tapOn:
+    id: register-full-name
+- inputText: QA New Driver
+- tapOn:
+    id: register-email
+- inputText: ${NEW_DRIVER_EMAIL}
+- tapOn:
+    id: register-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: register-submit
+# No driver profile yet: the vehicle form comes first.
+- extendedWaitUntil:
+    visible:
+      id: vehicle-form
+    timeout: 20000
+- tapOn:
+    id: vehicle-type
+- inputText: Scooter
+- tapOn:
+    id: license-plate
+- inputText: QA-NEW
+- tapOn:
+    id: register-vehicle
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 15000
+- assertVisible:
+    id: driver-status
+    text: Offline
+- assertVisible: 'Scooter · QA-NEW'
+- assertVisible:
+    id: go-online
