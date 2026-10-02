@@ -1,0 +1,30 @@
+url: ${APP_URL}
+name: Driver goes online, waits for a job, and goes offline again
+tags:
+  - smoke
+---
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: driver/reset
+- runFlow: ../_shared/login.yaml
+- tapOn:
+    id: go-online
+- extendedWaitUntil:
+    visible:
+      id: driver-status
+      text: 'Online · waiting for a job'
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: waiting-for-job
+    timeout: 15000
+- tapOn:
+    id: go-offline
+- extendedWaitUntil:
+    visible:
+      id: driver-status
+      text: Offline
+    timeout: 15000
+- assertNotVisible:
+    id: waiting-for-job

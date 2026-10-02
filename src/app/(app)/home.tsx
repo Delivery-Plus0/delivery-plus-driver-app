@@ -255,7 +255,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
         testID="drop-off"
       />
 
-      <View style={styles.items} testID="order-items">
+      <View style={styles.items} testID="order-items" nativeID="order-items">
         {delivery.order.items.map((item, index) => (
           <ThemedText key={`${item.name}-${index}`} type="small">
             {item.quantity}× {item.name}
@@ -276,7 +276,8 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
 
 function Stop({ icon, label, title, detail, testID }: { icon: 'store' | 'location'; label: string; title: string; detail?: string; testID: string }) {
   return (
-    <View style={styles.stop} testID={testID}>
+    // nativeID too: react-native-web renders it as the HTML id that Maestro's web driver looks up.
+    <View style={styles.stop} testID={testID} nativeID={testID}>
       <Icon name={icon} size={IconSize.md} color={BrandColors.primaryText} />
       <View style={styles.rowText}>
         <ThemedText type="caption" themeColor="textSecondary">

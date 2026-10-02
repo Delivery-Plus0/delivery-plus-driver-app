@@ -69,7 +69,7 @@ export default function LoginScreen() {
   return (
     <AuthFormShell
       title="Welcome back"
-      subtitle="Sign in to continue your order."
+      subtitle="Sign in to start your shift."
       footer={
         <>
           <ThemedText type="small" themeColor="textSecondary">

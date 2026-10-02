@@ -65,8 +65,8 @@ export default function RegisterScreen() {
 
   return (
     <AuthFormShell
-      title="Create account"
-      subtitle="Join Delivery Plus and order your favorites in minutes."
+      title="Become a driver"
+      subtitle="Create your driver account, then register your vehicle to start delivering."
       footer={
         <>
           <ThemedText type="small" themeColor="textSecondary">
@@ -81,12 +81,13 @@ export default function RegisterScreen() {
       }
     >
       <FormTextInput
+        testID="register-full-name"
         label="Full name"
         value={fullName}
         onChangeText={setFullName}
         onBlur={markTouched('fullName')}
         error={visibleError('fullName')}
-        placeholder="Jane Customer"
+        placeholder="Jane Driver"
         autoCapitalize="words"
         autoComplete="name"
         textContentType="name"
@@ -95,6 +96,7 @@ export default function RegisterScreen() {
         onSubmitEditing={() => emailRef.current?.focus()}
       />
       <FormTextInput
+        testID="register-email"
         ref={emailRef}
         label="Email"
         value={email}
@@ -112,6 +114,7 @@ export default function RegisterScreen() {
         onSubmitEditing={() => phoneRef.current?.focus()}
       />
       <FormTextInput
+        testID="register-phone"
         ref={phoneRef}
         label="Phone"
         value={phone}
@@ -125,6 +128,7 @@ export default function RegisterScreen() {
         onSubmitEditing={() => passwordRef.current?.focus()}
       />
       <FormTextInput
+        testID="register-password"
         ref={passwordRef}
         label="Password"
         value={password}
@@ -141,11 +145,11 @@ export default function RegisterScreen() {
 
       {error ? (
         <View style={styles.alert}>
-          <InlineAlert message={error} />
+          <InlineAlert message={error} testID="register-error" />
         </View>
       ) : null}
 
-      <AppButton title="Create account" onPress={() => void handleSubmit()} loading={isSubmitting} />
+      <AppButton testID="register-submit" title="Create driver account" onPress={() => void handleSubmit()} loading={isSubmitting} />
     </AuthFormShell>
   );
 }

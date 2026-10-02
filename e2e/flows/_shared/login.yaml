@@ -1,0 +1,21 @@
+# Shared: start from a clean browser state and sign in as ${EMAIL} (the QA driver).
+url: ${APP_URL}/login
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login-email
+    timeout: 20000
+- tapOn:
+    id: login-email
+- inputText: ${EMAIL}
+- tapOn:
+    id: login-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login-submit
+- extendedWaitUntil:
+    visible:
+      id: sign-out
+    timeout: 20000

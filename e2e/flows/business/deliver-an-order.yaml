@@ -1,0 +1,65 @@
+url: ${APP_URL}
+name: Full delivery - driver goes online, gets the order automatically, picks it up and delivers it
+tags:
+  - business
+---
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: driver/reset
+- runFlow: ../_shared/login.yaml
+- tapOn:
+    id: go-online
+- extendedWaitUntil:
+    visible:
+      id: waiting-for-job
+    timeout: 15000
+
+# CUSTOMER + RESTAURANT (stand-ins: the runner orders as the QA customer and marks it ready as the
+# QA restaurant). No dispatch step: the backend assigns this online driver by itself.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: scenario/order-ready
+
+# DRIVER APP: the job arrives on the next poll (every 5 s).
+- extendedWaitUntil:
+    visible:
+      id: current-delivery
+    timeout: 30000
+- assertVisible:
+    id: driver-status
+    text: On a delivery
+- assertVisible: 'QA Kitchen'
+- assertVisible: '1 Test Street, Apt 1'
+- assertVisible: '.*QA Pasta'
+
+- tapOn:
+    id: delivery-action-pickup
+- extendedWaitUntil:
+    visible:
+      id: delivery-action-start
+    timeout: 15000
+- tapOn:
+    id: delivery-action-start
+- extendedWaitUntil:
+    visible:
+      id: delivery-action-complete
+    timeout: 15000
+- tapOn:
+    id: delivery-action-complete
+
+# Completing frees the driver: back to waiting, still online.
+- extendedWaitUntil:
+    visible:
+      id: waiting-for-job
+    timeout: 20000
+- assertVisible:
+    id: driver-status
+    text: 'Online · waiting for a job'
+
+# CROSS-APP: the order this driver delivered is DELIVERED for the customer.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: order/assert-delivered
