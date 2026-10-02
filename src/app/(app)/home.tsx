@@ -11,6 +11,7 @@ import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { ErrorState, StateView } from '@/components/ui/state-view';
 import { BrandColors, IconSize, Spacing } from '@/constants/theme';
+import { useLocationSharing } from '@/hooks/use-location-sharing';
 import { ApiError } from '@/services/api';
 import type { CurrentDelivery } from '@/services/deliveries';
 import type { Driver, DriverStatus } from '@/services/drivers';
@@ -26,6 +27,7 @@ import {
   isOnShift,
   nextAction,
 } from '@/utils/driver-status';
+import { LOCATION_SHARING_LABELS, shouldShareLocation, type LocationSharingState } from '@/utils/location-sharing';
 
 const STATUS_TONES: Record<DriverStatus, BadgeTone> = {
   OFFLINE: 'neutral',
@@ -214,6 +216,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
   const [isActing, setIsActing] = useState(false);
   const inFlight = useRef(false);
   const action = nextAction(delivery);
+  const locationState = useLocationSharing(shouldShareLocation(delivery.status));
 
   async function act() {
     if (!action || inFlight.current) return;
@@ -254,6 +257,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
         detail={delivery.dropOff.notes ?? undefined}
         testID="drop-off"
       />
+      <LocationLine state={locationState} />
 
       <View style={styles.items} testID="order-items" nativeID="order-items">
         {delivery.order.items.map((item, index) => (
@@ -271,6 +275,17 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
         <AppButton testID={`delivery-action-${action}`} title={ACTION_LABELS[action]} onPress={() => void act()} loading={isActing} />
       ) : null}
     </Card>
+  );
+}
+
+function LocationLine({ state }: { state: LocationSharingState }) {
+  return (
+    <View style={styles.stop} testID="location-sharing" nativeID="location-sharing">
+      <Icon name="location" size={IconSize.md} color={state === 'sharing' ? BrandColors.primaryText : undefined} />
+      <ThemedText type="small" themeColor={state === 'sharing' ? 'text' : 'textSecondary'} style={styles.rowText} testID="location-status">
+        {LOCATION_SHARING_LABELS[state]}
+      </ThemedText>
+    </View>
   );
 }
 

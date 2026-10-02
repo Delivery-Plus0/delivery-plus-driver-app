@@ -24,7 +24,9 @@ A fix to any of these belongs in both apps.
 | Current delivery, actions | `src/services/deliveries.ts` |
 | Screen state and actions | `src/state/driver.ts` |
 | Status rules and labels | `src/utils/driver-status.ts` |
+| Location sharing (send loop + rules, device/fixed position, API call, hook) | `src/utils/location-sharing.ts`, `src/services/location.ts`, `src/services/tracking.ts`, `src/hooks/use-location-sharing.ts` |
 | Main screen (vehicle form, status card, delivery card) | `src/app/(app)/home.tsx` |
+| Maestro suites, runner, control actions | `e2e/` (see `e2e/README.md`) |
 | Role guard (DRIVER only) | `src/app/(auth)/login.tsx` (refuses before storing a session), `src/app/(app)/_layout.tsx` (clears any non-driver session) |
 
 ## Backend contracts (verified against `delivery-plus` dev)
@@ -37,9 +39,17 @@ A fix to any of these belongs in both apps.
 | `GET /api/deliveries/me/current` | DRIVER only; 200 with pickup, drop-off, items, total, `nextActions`; **204** when no job (#96) |
 | `POST /api/deliveries/:id/pickup|start|complete` | Assigned driver only; retry-safe: repeating re-runs side effects instead of 409 |
 | Dispatch | Automatic on `order.ready_for_pickup` (#97); a driver who comes online gets a waiting delivery within one sweep (15 s default, 2 s on the E2E stack) |
+| `POST /api/tracking/location` `{latitude, longitude}` | DRIVER only, keyed by the token's user; last position kept 300 s in Redis. Customers read it via `GET /api/tracking/delivery/:deliveryId` |
+| Gateway CORS (development) | Allows web origins on ports 8081–8084; the E2E web build is served on 8084 (backend #111) |
 
-## Not built yet (#99 scope)
+## Location rules
 
-- Sending location while on a delivery (`POST /api/tracking/location`; needs `expo-location` and a development build).
-- Maestro suite against the isolated E2E stack, and CI for it.
+- Shared only while the delivery is DRIVER_ASSIGNED, PICKED_UP or IN_TRANSIT, every 10 s, foreground only (the app must be open).
+- `EXPO_PUBLIC_FIXED_LOCATION="lat,lng"` replaces the device position. Only dev/E2E builds set it: Maestro's web driver cannot grant or fake geolocation (`setLocation` fails on web).
+- After completion the backend still holds the last position until its TTL expires; stopping it server-side is Phase 7.
+
+## Not built yet
+
+- Background location, location stop on completion server-side (Phase 7).
+- Cross-app run: the customer app's business flow still drives the driver by API (#99 step 7).
 - Offer/accept, earnings, shift planning, navigation hand-off (out of MVP scope).
