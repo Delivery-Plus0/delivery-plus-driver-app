@@ -8,6 +8,11 @@ tags:
     env:
       ACTION: driver/reset
 - runFlow: ../_shared/login.yaml
+# Let the Today tab finish loading (post-login redirect + driver profile) before switching tabs.
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 20000
 
 # History and Wallet have no backend yet: honest placeholders, no invented trips or money.
 - tapOn:
