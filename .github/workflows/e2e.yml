@@ -105,6 +105,8 @@ jobs:
         with:
           name: e2e-${{ env.SUITE }}-${{ github.run_id }}
           path: e2e/.artifacts/
+          # `.artifacts` is a hidden directory, which upload-artifact v4 skips unless told otherwise.
+          include-hidden-files: true
           retention-days: 14
           if-no-files-found: ignore
 
