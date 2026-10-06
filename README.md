@@ -2,7 +2,7 @@
 
 The driver client of **Delivery Plus**, a food-delivery platform. Drivers go online, receive deliveries automatically, and take each order from the restaurant to the customer.
 
-Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, on the same foundation as the [customer app](https://github.com/Yousefa7medmaher/delivery-plus-customer-app): API client, session handling, `useResource` cache and polling, UI kit, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Yousefa7medmaher/delivery-plus](https://github.com/Yousefa7medmaher/delivery-plus) (issue #99).
+Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, on the same foundation as the [customer app](https://github.com/Delivery-Plus0/delivery-plus-customer-app): API client, session handling, `useResource` cache and polling, UI kit, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Delivery-Plus0/delivery-plus](https://github.com/Delivery-Plus0/delivery-plus) (issue #99).
 
 ## Features (MVP)
 

@@ -2,7 +2,7 @@
 
 ## Before you start
 
-Read [.project-context/00-INDEX.md](.project-context/00-INDEX.md) first. Planning for all Delivery Plus clients lives in the customer app repository (`planning.md`); the driver app is issue #99 in the backend repository. This app talks only to the Delivery Plus API gateway; the backend lives in [Yousefa7medmaher/delivery-plus](https://github.com/Yousefa7medmaher/delivery-plus) (default branch `dev`). Check its `docs/services/<name>.md` and public OpenAPI contract (`docs/openapi/delivery-plus-public.json`) before relying on an endpoint.
+Read [.project-context/00-INDEX.md](.project-context/00-INDEX.md) first. Planning for all Delivery Plus clients lives in the customer app repository (`planning.md`); the driver app is issue #99 in the backend repository. This app talks only to the Delivery Plus API gateway; the backend lives in [Delivery-Plus0/delivery-plus](https://github.com/Delivery-Plus0/delivery-plus) (default branch `dev`). Check its `docs/services/<name>.md` and public OpenAPI contract (`docs/openapi/delivery-plus-public.json`) before relying on an endpoint.
 
 ## Workflow
 
