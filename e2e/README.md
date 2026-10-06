@@ -37,8 +37,8 @@ Tear down with `npm run e2e:env:down` (in `delivery-plus`; removes the E2E volum
 
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
-| `smoke` | QA driver signs in and sees vehicle + status · goes online (waiting for a job) and offline again · a new driver signs up, registers a vehicle and lands Offline | every PR |
-| `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off and items → the app shares its location and the customer's tracking view shows it → pickup → start → complete → back to waiting → the customer's order is DELIVERED | nightly / manual |
+| `smoke` | QA driver signs in and sees vehicle + status · goes online (waiting for a job) and offline again · a new driver signs up, registers a vehicle and lands Offline · tabs: History and Wallet are honest "coming soon" placeholders, Profile shows email + vehicle and signs out after confirming | every PR |
+| `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off, items, step progress and directions links → the app shares its location and the customer's tracking view shows it → pickup (a cancelled confirmation changes nothing), start and complete, each confirmed in the in-app dialog → back to waiting → the customer's order is DELIVERED | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)
 

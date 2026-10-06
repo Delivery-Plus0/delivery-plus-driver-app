@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Dialog } from '@/components/ui/dialog';
 import { FormTextInput } from '@/components/ui/form-text-input';
 import { Icon } from '@/components/ui/icon';
 import { InlineAlert } from '@/components/ui/inline-alert';
@@ -13,13 +14,13 @@ import { ErrorState, StateView } from '@/components/ui/state-view';
 import { BrandColors, IconSize, Spacing } from '@/constants/theme';
 import { useLocationSharing } from '@/hooks/use-location-sharing';
 import { ApiError } from '@/services/api';
-import type { CurrentDelivery } from '@/services/deliveries';
+import type { CurrentDelivery, DeliveryStatus } from '@/services/deliveries';
 import type { Driver, DriverStatus } from '@/services/drivers';
-import { clearSession, useAuthSession } from '@/services/session';
 import { advanceDelivery, registerMyVehicle, setOnline, useCurrentDelivery, useMyDriver } from '@/state/driver';
-import { confirm } from '@/utils/confirm';
+import { deliveryProgressLabel, deliverySteps, type DeliveryStepState } from '@/utils/delivery-steps';
 import { formatMoney } from '@/utils/format';
 import {
+  ACTION_CONFIRMATIONS,
   ACTION_LABELS,
   DELIVERY_STAGE_LABELS,
   DRIVER_STATUS_LABELS,
@@ -28,6 +29,7 @@ import {
   nextAction,
 } from '@/utils/driver-status';
 import { LOCATION_SHARING_LABELS, shouldShareLocation, type LocationSharingState } from '@/utils/location-sharing';
+import { directionsUrl } from '@/utils/maps';
 
 const STATUS_TONES: Record<DriverStatus, BadgeTone> = {
   OFFLINE: 'neutral',
@@ -38,15 +40,12 @@ const STATUS_TONES: Record<DriverStatus, BadgeTone> = {
 
 const errorMessage = (caught: unknown, fallback: string) => (caught instanceof ApiError ? caught.message : fallback);
 
+const todayLabel = () => new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** Today tab: the driver's status and, while on shift, the current job or what to expect next. */
 export default function HomeScreen() {
-  const { session } = useAuthSession();
   const driver = useMyDriver();
   const delivery = useCurrentDelivery(driver.data);
-
-  async function signOut() {
-    const ok = await confirm({ title: 'Sign out?', message: 'You can sign back in at any time.', confirmLabel: 'Sign out' });
-    if (ok) await clearSession();
-  }
 
   async function refreshAll() {
     await Promise.all([driver.refresh(), isOnShift(driver.data?.status) ? delivery.refresh() : Promise.resolve()]);
@@ -54,11 +53,7 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <ScreenHeader
-        title="Delivery Plus Driver"
-        subtitle={session?.user.email}
-        right={<AppButton testID="sign-out" title="Sign out" icon="logout" variant="ghost" size="sm" onPress={() => void signOut()} />}
-      />
+      <ScreenHeader title="Today" subtitle={todayLabel()} />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={driver.refreshing || delivery.refreshing} onRefresh={() => void refreshAll()} />}>
@@ -86,6 +81,13 @@ export default function HomeScreen() {
                   testID="waiting-for-job"
                 />
               )
+            ) : driver.data.status === 'OFFLINE' ? (
+              <StateView
+                icon="offline"
+                title="You're offline"
+                message="Go online to receive deliveries. Jobs are assigned automatically to drivers who are online, and this screen shows the next one as soon as it is yours."
+                testID="offline-guidance"
+              />
             ) : null}
           </>
         ) : null}
@@ -215,10 +217,13 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
   const [error, setError] = useState<string | null>(null);
   const [isActing, setIsActing] = useState(false);
   const inFlight = useRef(false);
+  const [confirming, setConfirming] = useState(false);
   const action = nextAction(delivery);
   const locationState = useLocationSharing(shouldShareLocation(delivery.status));
+  const confirmation = action ? ACTION_CONFIRMATIONS[action] : null;
 
   async function act() {
+    setConfirming(false);
     if (!action || inFlight.current) return;
     inFlight.current = true;
     setIsActing(true);
@@ -242,12 +247,14 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
         </ThemedText>
         <Badge label={DELIVERY_STAGE_LABELS[delivery.status]} tone="brand" testID="delivery-stage" />
       </View>
+      <StepProgress status={delivery.status} />
 
       <Stop
         icon="store"
         label="Pickup"
         title={delivery.pickup.name}
         detail={delivery.pickup.address}
+        mapsUrl={directionsUrl({ address: [delivery.pickup.name, delivery.pickup.address].filter(Boolean).join(', ') })}
         testID="pickup"
       />
       <Stop
@@ -255,6 +262,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
         label="Drop-off"
         title={delivery.dropOff.address ?? 'No address on this order'}
         detail={delivery.dropOff.notes ?? undefined}
+        mapsUrl={directionsUrl(delivery.dropOff)}
         testID="drop-off"
       />
       <LocationLine state={locationState} />
@@ -272,9 +280,48 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
 
       {error ? <InlineAlert message={error} testID="delivery-error" /> : null}
       {action ? (
-        <AppButton testID={`delivery-action-${action}`} title={ACTION_LABELS[action]} onPress={() => void act()} loading={isActing} />
+        <AppButton testID={`delivery-action-${action}`} title={ACTION_LABELS[action]} onPress={() => setConfirming(true)} loading={isActing} />
+      ) : null}
+      {confirmation ? (
+        <Dialog
+          visible={confirming}
+          title={confirmation.title}
+          message={confirmation.message}
+          confirmLabel={confirmation.confirmLabel}
+          onConfirm={() => void act()}
+          onCancel={() => setConfirming(false)}
+          testID="delivery-confirm"
+        />
       ) : null}
     </Card>
+  );
+}
+
+const STEP_COLORS: Record<DeliveryStepState, string> = {
+  done: BrandColors.success,
+  current: BrandColors.primary,
+  upcoming: BrandColors.border,
+};
+
+function StepProgress({ status }: { status: DeliveryStatus }) {
+  const label = deliveryProgressLabel(status);
+  return (
+    <View style={styles.progress} testID="delivery-steps" nativeID="delivery-steps">
+      <View style={styles.progressBar}>
+        {deliverySteps(status).map((step) => (
+          <View
+            key={step.key}
+            style={[styles.progressSegment, { backgroundColor: STEP_COLORS[step.state] }]}
+            accessibilityLabel={`${step.label}: ${step.state}`}
+          />
+        ))}
+      </View>
+      {label ? (
+        <ThemedText type="caption" themeColor="textSecondary" testID="delivery-progress" nativeID="delivery-progress">
+          {label}
+        </ThemedText>
+      ) : null}
+    </View>
   );
 }
 
@@ -289,7 +336,9 @@ function LocationLine({ state }: { state: LocationSharingState }) {
   );
 }
 
-function Stop({ icon, label, title, detail, testID }: { icon: 'store' | 'location'; label: string; title: string; detail?: string; testID: string }) {
+type StopProps = { icon: 'store' | 'location'; label: string; title: string; detail?: string; mapsUrl?: string | null; testID: string };
+
+function Stop({ icon, label, title, detail, mapsUrl, testID }: StopProps) {
   return (
     // nativeID too: react-native-web renders it as the HTML id that Maestro's web driver looks up.
     <View style={styles.stop} testID={testID} nativeID={testID}>
@@ -305,6 +354,18 @@ function Stop({ icon, label, title, detail, testID }: { icon: 'store' | 'locatio
           </ThemedText>
         ) : null}
       </View>
+      {mapsUrl ? (
+        <AppButton
+          testID={`${testID}-maps`}
+          title="Directions"
+          icon="directions"
+          variant="ghost"
+          size="sm"
+          fullWidth={false}
+          accessibilityHint={`Opens your maps app with directions to the ${label.toLowerCase()}`}
+          onPress={() => void Linking.openURL(mapsUrl)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -330,6 +391,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.two,
     marginVertical: Spacing.two,
+  },
+  progress: {
+    gap: Spacing.one,
+    marginBottom: Spacing.two,
+  },
+  progressBar: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+  },
+  progressSegment: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
   },
   items: {
     gap: Spacing.one,

@@ -4,7 +4,7 @@ name: E2E (Maestro)
 #   backend repo → docker compose E2E stack (gateway :3100) → deterministic seed → web build of this
 #   app (:8084) → Maestro (headless Chromium) → artifacts.
 #
-# - Pull requests run the smoke suite (sign-in, online/offline, new driver + vehicle).
+# - Pull requests run the smoke suite (sign-in, online/offline, new driver + vehicle, tabs + profile).
 # - A nightly schedule and manual runs execute everything: smoke + the business flow (automatic
 #   dispatch → pickup → start → complete → the customer's order is DELIVERED).
 #

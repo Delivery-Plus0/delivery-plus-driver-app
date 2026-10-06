@@ -15,7 +15,8 @@ url: ${APP_URL}/login
 - inputText: ${PASSWORD}
 - tapOn:
     id: login-submit
+# Signed in: the tab bar (Today, History, Wallet, Profile) is up.
 - extendedWaitUntil:
     visible:
-      id: sign-out
+      id: tab-today
     timeout: 20000

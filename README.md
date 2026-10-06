@@ -8,11 +8,12 @@ Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, on the sa
 
 | Area | What works | Backend contract |
 | --- | --- | --- |
+| Navigation | Tabs: **Today** (status, current job or what to do next), **History**, **Wallet**, **Profile** (email, vehicle, sign out). History and Wallet say "coming soon" until their backend exists (#142, #145/#146); they never show invented trips or money | — |
 | Account | Sign up as a driver; sign in (DRIVER accounts only; other roles are refused before a session is stored) | `POST /api/auth/register`, `/login` |
 | Vehicle | First-use vehicle registration | `GET /api/drivers/me` (404 → register), `POST /api/drivers/register` |
 | Availability | Go online / offline; "On a delivery" while busy (the backend frees the driver on completion) | `POST /api/drivers/me/online`, `/me/offline` |
-| Current job | Pickup (restaurant, address), drop-off (address, notes), items and total; polled every 5 s while on shift | `GET /api/deliveries/me/current` (204 → waiting) |
-| Actions | One button for the next step: picked up → start delivery → mark as delivered (retry-safe on the server) | `POST /api/deliveries/:id/pickup|start|complete` |
+| Current job | Step progress (to restaurant → picked up → on the way → delivered), pickup (restaurant, address) and drop-off (address, notes) each with a **Directions** hand-off to the maps app, items and total; polled every 5 s while on shift. Offline, the Today tab explains how to get jobs | `GET /api/deliveries/me/current` (204 → waiting) |
+| Actions | One button for the next step: picked up → start delivery → mark as delivered. Each step is one-way, so an in-app dialog asks first (retry-safe on the server) | `POST /api/deliveries/:id/pickup|start|complete` |
 | Location | While on a delivery (assigned → in transit) the app sends its position every 10 s, foreground only; the card shows whether sharing works or permission is off | `POST /api/tracking/location` |
 
 Deliveries are assigned by the backend (automatic dispatch), so there is no "accept" step in this MVP. Not yet built: background location, push notifications, earnings.
@@ -35,12 +36,12 @@ Optional, development only: `EXPO_PUBLIC_FIXED_LOCATION=30.0444,31.2357` makes t
 
 ```text
 src/
-├── app/            Expo Router screens: (auth) welcome·sign-in·sign-up, (app)/home (vehicle, status, current delivery)
-├── components/     UI kit shared with the customer app (cards, buttons, form inputs, alerts, state views)
+├── app/            Expo Router screens: (auth) welcome·sign-in·sign-up, (app)/(tabs) home = Today (vehicle, status, current job), history, wallet, profile
+├── components/     UI kit shared with the customer app (cards, buttons, form inputs, alerts, state views) + dialog.tsx (in-app confirmation, driver-only until the shared kit #155)
 ├── services/       API client (api.ts), session, auth, drivers (profile, online/offline), deliveries (current, actions), location + tracking
 ├── state/          driver.ts: useMyDriver, useCurrentDelivery and the actions that update the cache
 ├── hooks/          useResource (cache, polling, in-flight dedupe), useLocationSharing, theme hooks
-├── utils/          driver-status (labels, toggle rules, next action), location-sharing (send loop, rules), formatting, login errors (unit-tested)
+├── utils/          driver-status (labels, toggle rules, next action, confirmations), delivery-steps (job progress), maps (directions link), location-sharing (send loop, rules), formatting, login errors (unit-tested)
 └── test/           Test setup
 ```
 
