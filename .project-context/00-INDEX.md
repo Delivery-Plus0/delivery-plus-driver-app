@@ -40,7 +40,7 @@ A fix to any of these belongs in both apps.
 | `POST /api/deliveries/:id/pickup|start|complete` | Assigned driver only; retry-safe: repeating re-runs side effects instead of 409 |
 | Dispatch | Automatic on `order.ready_for_pickup` (#97); a driver who comes online gets a waiting delivery within one sweep (15 s default, 2 s on the E2E stack) |
 | `POST /api/tracking/location` `{latitude, longitude}` | DRIVER only, keyed by the token's user; last position kept 300 s in Redis. Customers read it via `GET /api/tracking/delivery/:deliveryId` |
-| Gateway CORS (development) | Allows web origins on ports 8081–8084; the E2E web build is served on 8084 (backend #111) |
+| Gateway CORS (development) | Allows web origins on ports 8081–8085; the E2E web build is served on 8084 (backend #111, #124) |
 
 ## Location rules
 
@@ -48,8 +48,11 @@ A fix to any of these belongs in both apps.
 - `EXPO_PUBLIC_FIXED_LOCATION="lat,lng"` replaces the device position. Only dev/E2E builds set it: Maestro's web driver cannot grant or fake geolocation (`setLocation` fails on web).
 - After completion the backend still holds the last position until its TTL expires; stopping it server-side is Phase 7.
 
+## Cross-app run
+
+The customer app's business flow drives this app's real UI (go online, pickup → start → complete), next to the real restaurant app (customer repo #19, #20). It needs the driver and restaurant web builds, so on GitHub it runs only once the customer repo has the `CLIENT_APPS_READ_TOKEN` secret.
+
 ## Not built yet
 
 - Background location, location stop on completion server-side (Phase 7).
-- Cross-app run: the customer app's business flow still drives the driver by API (#99 step 7).
 - Offer/accept, earnings, shift planning, navigation hand-off (out of MVP scope).
