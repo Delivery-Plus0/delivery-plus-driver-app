@@ -1,0 +1,64 @@
+url: ${APP_URL}
+name: Driver tabs - History and Wallet say they are coming soon, Profile shows the account and signs out
+tags:
+  - smoke
+---
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: driver/reset
+- runFlow: ../_shared/login.yaml
+# Let the Today tab finish loading (post-login redirect + driver profile) before switching tabs.
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 20000
+
+# History and Wallet have no backend yet: honest placeholders, no invented trips or money.
+- tapOn:
+    id: tab-history
+- extendedWaitUntil:
+    visible:
+      id: history-coming-soon
+    timeout: 10000
+- tapOn:
+    id: tab-wallet
+- extendedWaitUntil:
+    visible:
+      id: wallet-coming-soon
+    timeout: 10000
+- assertNotVisible: '.*EGP.*'
+
+# Profile: the account and the registered vehicle, as the backend has them.
+- tapOn:
+    id: tab-profile
+- extendedWaitUntil:
+    visible:
+      id: profile-email
+      text: ${EMAIL}
+    timeout: 10000
+- assertVisible:
+    id: profile-vehicle-value
+    text: 'Bicycle · QA-0001'
+
+# Sign out asks first; cancelling keeps the driver signed in.
+- tapOn:
+    id: sign-out
+- extendedWaitUntil:
+    visible:
+      id: sign-out-dialog
+    timeout: 10000
+- tapOn:
+    id: sign-out-dialog-cancel
+- assertNotVisible:
+    id: sign-out-dialog
+- assertVisible:
+    id: profile-email
+- tapOn:
+    id: sign-out
+- tapOn:
+    id: sign-out-dialog-confirm
+- extendedWaitUntil:
+    visible:
+      id: welcome-login
+    timeout: 15000

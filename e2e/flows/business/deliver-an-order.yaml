@@ -45,20 +45,57 @@ tags:
     env:
       ACTION: tracking/assert-location
 
+# The job card: step progress and a directions hand-off for both stops.
+- assertVisible:
+    id: delivery-progress
+    text: 'Step 1 of 4 · To restaurant'
+- assertVisible:
+    id: pickup-maps
+- assertVisible:
+    id: drop-off-maps
+
+# Every step is one-way, so it asks first. Cancelling changes nothing.
 - tapOn:
     id: delivery-action-pickup
 - extendedWaitUntil:
     visible:
+      id: delivery-confirm
+    timeout: 10000
+- assertVisible: 'Picked up the order\?'
+- tapOn:
+    id: delivery-confirm-cancel
+- assertNotVisible:
+    id: delivery-confirm
+- assertVisible:
+    id: delivery-stage
+    text: Go to the restaurant
+
+- tapOn:
+    id: delivery-action-pickup
+- tapOn:
+    id: delivery-confirm-confirm
+- extendedWaitUntil:
+    visible:
       id: delivery-action-start
     timeout: 15000
+- assertVisible:
+    id: delivery-progress
+    text: 'Step 2 of 4 · Picked up'
 - tapOn:
     id: delivery-action-start
+- tapOn:
+    id: delivery-confirm-confirm
 - extendedWaitUntil:
     visible:
       id: delivery-action-complete
     timeout: 15000
+- assertVisible:
+    id: delivery-progress
+    text: 'Step 3 of 4 · On the way'
 - tapOn:
     id: delivery-action-complete
+- tapOn:
+    id: delivery-confirm-confirm
 
 # Completing frees the driver: back to waiting, still online.
 - extendedWaitUntil:

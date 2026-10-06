@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canToggleOnline, isOnShift, nextAction } from './driver-status';
+import { ACTION_CONFIRMATIONS, ACTION_LABELS, canToggleOnline, isOnShift, nextAction } from './driver-status';
 
 describe('driver status helpers', () => {
   it('lets the driver toggle only between OFFLINE and AVAILABLE', () => {
@@ -23,5 +23,14 @@ describe('driver status helpers', () => {
     expect(nextAction({ nextActions: [] })).toBeNull();
     expect(nextAction(null)).toBeNull();
     expect(nextAction(undefined)).toBeNull();
+  });
+
+  it('asks for confirmation before every delivery action', () => {
+    for (const action of Object.keys(ACTION_LABELS) as (keyof typeof ACTION_LABELS)[]) {
+      const confirmation = ACTION_CONFIRMATIONS[action];
+      expect(confirmation.title).not.toBe('');
+      expect(confirmation.message).not.toBe('');
+      expect(confirmation.confirmLabel).not.toBe('');
+    }
   });
 });

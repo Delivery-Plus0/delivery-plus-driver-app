@@ -8,6 +8,11 @@ tags:
     env:
       ACTION: driver/reset
 - runFlow: ../_shared/login.yaml
+# Offline: the Today tab says what to do.
+- extendedWaitUntil:
+    visible:
+      id: offline-guidance
+    timeout: 15000
 - tapOn:
     id: go-online
 - extendedWaitUntil:
@@ -28,3 +33,5 @@ tags:
     timeout: 15000
 - assertNotVisible:
     id: waiting-for-job
+- assertVisible:
+    id: offline-guidance

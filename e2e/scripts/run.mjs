@@ -38,7 +38,7 @@ const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 const FIXED_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
 
 const SUITES = {
-  smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml'],
+  smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml', 'smoke/04-tabs-and-profile.yaml'],
   business: ['business/deliver-an-order.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
