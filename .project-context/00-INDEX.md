@@ -39,7 +39,7 @@ A fix to any of these belongs in both apps.
 | `GET /api/deliveries/me/current` | DRIVER only; 200 with pickup, drop-off, items, total, `nextActions`; **204** when no job (#96) |
 | `POST /api/deliveries/:id/pickup|start|complete` | Assigned driver only; retry-safe: repeating re-runs side effects instead of 409 |
 | Dispatch | Automatic on `order.ready_for_pickup` (#97); a driver who comes online gets a waiting delivery within one sweep (15 s default, 2 s on the E2E stack) |
-| `POST /api/tracking/location` `{latitude, longitude}` | DRIVER only, keyed by the token's user; last position kept 300 s in Redis. Customers read it via `GET /api/tracking/delivery/:deliveryId` |
+| `POST /api/tracking/location` `{latitude, longitude, recordedAt}` | DRIVER only, keyed by the token's user, last position kept 300 s in Redis; customers read it via `GET /api/tracking/delivery/:deliveryId` (realtime over SSE). Trust rules (backend #60): <ul><li>Accepted only while the driver has an active delivery (409 otherwise), bound to it server-side.</li><li>`recordedAt` (capture time) can only cause a 422 rejection (future, too old, replayed).</li><li>Freshness is the server's receive time.</li><li>A report is a claim, never proof of presence.</li></ul> |
 | Gateway CORS (development) | Allows web origins on ports 8081–8085; the E2E web build is served on 8084 (backend #111, #124) |
 
 ## Location rules

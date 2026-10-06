@@ -1,6 +1,14 @@
 import type { DeliveryStatus } from '@/services/deliveries';
 
-export type Position = { latitude: number; longitude: number };
+export type Position = {
+  latitude: number;
+  longitude: number;
+  /**
+   * When the position was captured (ISO 8601). The backend only uses it to reject future, too old or
+   * replayed reports (#60); it never makes a position look fresher than when the server received it.
+   */
+  recordedAt?: string;
+};
 
 export type LocationSharingState = 'off' | 'starting' | 'sharing' | 'denied' | 'unavailable';
 
