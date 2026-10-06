@@ -84,8 +84,16 @@ describe('driver API', () => {
   it("reports the driver's location with only the coordinates (the driver comes from the token)", async () => {
     fetchMock.mockResolvedValue(respond(201, { userId: 'driver-user-1', latitude: 30.0444, longitude: 31.2357 }));
 
-    await reportLocation({ latitude: 30.0444, longitude: 31.2357 });
+    await reportLocation({ latitude: 30.0444, longitude: 31.2357, recordedAt: '2026-10-06T12:00:00.000Z' });
     expect(lastCall()).toMatchObject({ url: expect.stringMatching(/\/api\/tracking\/location$/), method: 'POST', auth: `Bearer ${driverToken}` });
+    const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
+    // Only the position and its capture time: no delivery id, ETA or geofence (the server derives those, #60).
+    expect(JSON.parse(String(init.body))).toEqual({ latitude: 30.0444, longitude: 31.2357, recordedAt: '2026-10-06T12:00:00.000Z' });
+  });
+
+  it('omits recordedAt when the position has none', async () => {
+    fetchMock.mockResolvedValue(respond(201, {}));
+    await reportLocation({ latitude: 30.0444, longitude: 31.2357 });
     const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toEqual({ latitude: 30.0444, longitude: 31.2357 });
   });

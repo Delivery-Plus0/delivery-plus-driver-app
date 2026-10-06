@@ -16,8 +16,9 @@ export async function requestLocationPermission(): Promise<boolean> {
   return granted;
 }
 
+/** The current position, stamped with when it was captured (the device fix's own time). */
 export async function getCurrentPosition(): Promise<Position> {
-  if (FIXED_LOCATION) return FIXED_LOCATION;
-  const { coords } = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-  return { latitude: coords.latitude, longitude: coords.longitude };
+  if (FIXED_LOCATION) return { ...FIXED_LOCATION, recordedAt: new Date().toISOString() };
+  const { coords, timestamp } = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+  return { latitude: coords.latitude, longitude: coords.longitude, recordedAt: new Date(timestamp).toISOString() };
 }
