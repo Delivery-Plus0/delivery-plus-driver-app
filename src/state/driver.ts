@@ -8,17 +8,28 @@ import {
   type DriverHistoryPage,
   type HistoryFilter,
 } from '@/services/deliveries';
-import { fetchMyDriver, goOffline, goOnline, registerVehicle, type Driver, type RegisterVehicleRequest } from '@/services/drivers';
+import { fetchMyDriver, goOffline, goOnline, registerVehicle, updateVehicle, type Driver, type RegisterVehicleRequest } from '@/services/drivers';
 import { fetchMyEarnings, type DriverEarnings } from '@/services/earnings';
 import { fetchMyRatingSummary, type DriverRatingSummary } from '@/services/ratings';
+import {
+  confirmAvatarUpload,
+  createAvatarUploadUrl,
+  fetchMyProfile,
+  removeMyAvatar,
+  updateMyProfile,
+  type UpdateProfileRequest,
+  type UserProfile,
+} from '@/services/users';
 import { fetchResource, setResourceData } from '@/state/resource-cache';
 import { isOnShift } from '@/utils/driver-status';
+import { pickImage, uploadToPresigned } from '@/utils/image-upload';
 
 const DRIVER_KEY = 'driver:me';
 const CURRENT_DELIVERY_KEY = 'delivery:current';
 const historyKey = (filter: HistoryFilter | null) => `delivery:history:${filter ?? 'all'}`;
 const COMPLETED_TODAY_KEY = 'delivery:history:today';
 const EARNINGS_KEY = 'driver:earnings';
+const PROFILE_KEY = 'profile';
 
 /** Newest completed deliveries fetched for the Today count; the backend allows up to 50 per page. */
 export const COMPLETED_TODAY_PAGE = 50;
@@ -65,6 +76,44 @@ export function useMyRatingSummary() {
 /** The driver's earnings from the backend ledger (#145/#146): totals and the newest entries. */
 export function useMyEarnings() {
   return useResource<DriverEarnings>(EARNINGS_KEY, () => fetchMyEarnings(), { staleTimeMs: 30_000 });
+}
+
+/** The driver's account in user-service (#147): name, phone, photo. */
+export function useMyProfile() {
+  return useResource<UserProfile>(PROFILE_KEY, fetchMyProfile, { staleTimeMs: 60_000 });
+}
+
+export async function saveMyProfile(changes: UpdateProfileRequest): Promise<UserProfile> {
+  const profile = await updateMyProfile(changes);
+  setResourceData<UserProfile>(PROFILE_KEY, profile);
+  return profile;
+}
+
+/** user-service's avatar policy is 5 MB. */
+export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+
+/** Uploads a new photo (customers see it on the driver card) and shows the server's profile right away. */
+export async function changeMyAvatar(source: 'library' | 'camera'): Promise<UserProfile | null> {
+  const picked = await pickImage(source, AVATAR_MAX_BYTES);
+  if (!picked) return null;
+  const presigned = await createAvatarUploadUrl(picked.mimeType);
+  await uploadToPresigned(presigned, picked);
+  const profile = await confirmAvatarUpload(presigned.objectKey);
+  setResourceData<UserProfile>(PROFILE_KEY, profile);
+  return profile;
+}
+
+export async function removeMyPhoto(): Promise<UserProfile> {
+  const profile = await removeMyAvatar();
+  setResourceData<UserProfile>(PROFILE_KEY, profile);
+  return profile;
+}
+
+/** Changes the vehicle (#147); the backend refuses it unless the driver is offline. */
+export async function updateMyVehicle(payload: RegisterVehicleRequest): Promise<Driver> {
+  const driver = await updateVehicle(payload);
+  setResourceData<Driver | null>(DRIVER_KEY, driver);
+  return driver;
 }
 
 export async function registerMyVehicle(payload: RegisterVehicleRequest): Promise<Driver> {

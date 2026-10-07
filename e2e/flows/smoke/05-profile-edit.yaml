@@ -1,0 +1,96 @@
+url: ${APP_URL}
+name: Driver profile - review status, name and phone (normalized), and the vehicle changes only while offline
+tags:
+  - smoke
+---
+# Fixtures: the QA driver is offline and free, with the seed's profile (no phone, Bicycle QA-0001).
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: driver/reset
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: profile/restore
+- runFlow: ../_shared/login.yaml
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 20000
+- tapOn:
+    id: tab-profile
+- extendedWaitUntil:
+    visible:
+      id: profile-name
+      text: QA Driver
+    timeout: 15000
+# The review status comes from driver-service; whichever it is, it is shown.
+- assertVisible:
+    id: profile-verification
+- assertVisible:
+    id: profile-phone
+    text: Not added
+
+# Name and phone: any common Egyptian form is saved as E.164 and shown formatted (#152).
+- tapOn:
+    id: profile-edit-details
+- extendedWaitUntil:
+    visible:
+      id: details-sheet
+    timeout: 10000
+- tapOn:
+    id: details-phone
+- inputText: 0101 234 5678
+- tapOn:
+    id: details-save
+- extendedWaitUntil:
+    visible:
+      id: profile-notice
+    timeout: 15000
+- assertVisible: 'Details saved\.'
+- assertVisible:
+    id: profile-phone
+    text: '\+20 101 234 5678'
+
+# Vehicle: offline, so it can change; the plate is stored upper-case.
+- tapOn:
+    id: profile-edit-vehicle
+- extendedWaitUntil:
+    visible:
+      id: vehicle-sheet
+    timeout: 10000
+- tapOn:
+    id: vehicle-plate
+- eraseText: 10
+- inputText: qa-0002
+- tapOn:
+    id: vehicle-save
+- extendedWaitUntil:
+    visible:
+      id: profile-vehicle-value
+      text: 'Bicycle · QA-0002'
+    timeout: 15000
+
+# Online, the vehicle is locked.
+- tapOn:
+    id: tab-today
+- tapOn:
+    id: go-online
+- extendedWaitUntil:
+    visible:
+      id: go-offline
+    timeout: 15000
+- tapOn:
+    id: tab-profile
+- extendedWaitUntil:
+    visible:
+      id: profile-vehicle-locked
+    timeout: 10000
+- assertNotVisible:
+    id: profile-edit-vehicle
+
+# Cleanup: back to the seed's profile for the other flows.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: profile/restore
