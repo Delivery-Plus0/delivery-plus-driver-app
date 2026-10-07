@@ -22,10 +22,12 @@ import {
   registerMyVehicle,
   setOnline,
   useCompletedTodayPage,
+  useMyRatingSummary,
   useCurrentDelivery,
   useMyDriver,
 } from '@/state/driver';
 import { completedToday, completedTodayLabel } from '@/utils/delivery-history';
+import { ratingSummaryLabel } from '@/utils/rating';
 import { deliveryProgressLabel, deliverySteps, type DeliveryStepState } from '@/utils/delivery-steps';
 import { formatMoney } from '@/utils/format';
 import {
@@ -183,6 +185,7 @@ function VehicleForm() {
 }
 
 function StatusCard({ driver }: { driver: Driver }) {
+  const rating = useMyRatingSummary();
   const [error, setError] = useState<string | null>(null);
   const [isSwitching, setIsSwitching] = useState(false);
   const inFlight = useRef(false);
@@ -213,6 +216,11 @@ function StatusCard({ driver }: { driver: Driver }) {
           <ThemedText type="small" themeColor="textSecondary">
             Your status
           </ThemedText>
+          {rating.data ? (
+            <ThemedText type="small" testID="driver-rating" nativeID="driver-rating">
+              {ratingSummaryLabel(rating.data)}
+            </ThemedText>
+          ) : null}
         </View>
         <Badge label={DRIVER_STATUS_LABELS[driver.status]} tone={STATUS_TONES[driver.status]} testID="driver-status" />
       </View>

@@ -9,12 +9,15 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { BrandColors, IconSize, Spacing } from '@/constants/theme';
 import { clearSession, useAuthSession } from '@/services/session';
-import { useMyDriver } from '@/state/driver';
+import { useMyDriver, useMyRatingSummary } from '@/state/driver';
+import { formatDateTime } from '@/utils/format';
+import { ratingSummaryLabel, starsText } from '@/utils/rating';
 
 /** Account and vehicle as the backend has them. Editing them is #147/#150. */
 export default function ProfileScreen() {
   const { session } = useAuthSession();
   const driver = useMyDriver();
+  const rating = useMyRatingSummary();
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
 
   return (
@@ -36,6 +39,27 @@ export default function ProfileScreen() {
             />
           )}
         </Card>
+        {rating.data ? (
+          <Card testID="profile-rating">
+            <ThemedText type="caption" themeColor="textSecondary">
+              Rating from customers
+            </ThemedText>
+            <ThemedText type="defaultBold" testID="profile-rating-summary" nativeID="profile-rating-summary">
+              {ratingSummaryLabel(rating.data)}
+            </ThemedText>
+            {rating.data.recentComments.map((comment, index) => (
+              <View key={`${comment.createdAt}-${index}`} style={styles.comment} testID={`profile-rating-comment-${index}`}>
+                <ThemedText type="small" style={styles.commentStars}>
+                  {starsText(comment.score)}
+                </ThemedText>
+                <ThemedText type="small">“{comment.comment}”</ThemedText>
+                <ThemedText type="caption" themeColor="textSecondary">
+                  {formatDateTime(comment.createdAt)}
+                </ThemedText>
+              </View>
+            ))}
+          </Card>
+        ) : null}
         <AppButton testID="sign-out" title="Sign out" icon="logout" variant="secondary" onPress={() => setConfirmingSignOut(true)} />
       </ScrollView>
       <Dialog
@@ -83,5 +107,12 @@ const styles = StyleSheet.create({
   },
   rowText: {
     flex: 1,
+  },
+  comment: {
+    gap: Spacing.half,
+    marginTop: Spacing.two,
+  },
+  commentStars: {
+    color: BrandColors.primaryText,
   },
 });
