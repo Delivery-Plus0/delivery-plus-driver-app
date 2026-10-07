@@ -178,3 +178,18 @@ tags:
       id: profile-rating-summary
       text: '(No ratings yet|★ [0-9]\.[0-9] · [0-9]+ ratings?)'
     timeout: 15000
+
+# WALLET (#145/#146): exactly one earning for this delivery, half the EGP 25 fee, pending its
+# settlement window.
+- tapOn:
+    id: tab-wallet
+- extendedWaitUntil:
+    visible:
+      id: wallet-entry-${output.control.orderId}
+    timeout: 15000
+- assertVisible:
+    id: wallet-entry-${output.control.orderId}-amount
+    text: 'EGP.12\.50'
+- assertVisible:
+    id: wallet-entry-${output.control.orderId}-status
+    text: Pending
