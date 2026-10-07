@@ -9,6 +9,7 @@ import {
   type HistoryFilter,
 } from '@/services/deliveries';
 import { fetchMyDriver, goOffline, goOnline, registerVehicle, type Driver, type RegisterVehicleRequest } from '@/services/drivers';
+import { fetchMyEarnings, type DriverEarnings } from '@/services/earnings';
 import { fetchMyRatingSummary, type DriverRatingSummary } from '@/services/ratings';
 import { fetchResource, setResourceData } from '@/state/resource-cache';
 import { isOnShift } from '@/utils/driver-status';
@@ -17,6 +18,7 @@ const DRIVER_KEY = 'driver:me';
 const CURRENT_DELIVERY_KEY = 'delivery:current';
 const historyKey = (filter: HistoryFilter | null) => `delivery:history:${filter ?? 'all'}`;
 const COMPLETED_TODAY_KEY = 'delivery:history:today';
+const EARNINGS_KEY = 'driver:earnings';
 
 /** Newest completed deliveries fetched for the Today count; the backend allows up to 50 per page. */
 export const COMPLETED_TODAY_PAGE = 50;
@@ -60,6 +62,11 @@ export function useMyRatingSummary() {
   return useResource<DriverRatingSummary>('driver:rating-summary', fetchMyRatingSummary, { staleTimeMs: 60_000 });
 }
 
+/** The driver's earnings from the backend ledger (#145/#146): totals and the newest entries. */
+export function useMyEarnings() {
+  return useResource<DriverEarnings>(EARNINGS_KEY, () => fetchMyEarnings(), { staleTimeMs: 30_000 });
+}
+
 export async function registerMyVehicle(payload: RegisterVehicleRequest): Promise<Driver> {
   const driver = await registerVehicle(payload);
   setResourceData<Driver | null>(DRIVER_KEY, driver);
@@ -79,5 +86,7 @@ export async function advanceDelivery(deliveryId: string, action: DeliveryAction
   if (action === 'complete') {
     // The finished job now belongs in the Today count; the History tab revalidates when opened.
     void fetchResource(COMPLETED_TODAY_KEY, () => fetchDeliveryHistory('completed', 1, COMPLETED_TODAY_PAGE)).catch(() => undefined);
+    // The new earning is in the ledger now (#145); refresh the Wallet's copy.
+    void fetchResource(EARNINGS_KEY, () => fetchMyEarnings()).catch(() => undefined);
   }
 }
