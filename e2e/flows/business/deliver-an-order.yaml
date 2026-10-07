@@ -111,3 +111,54 @@ tags:
     file: ../../scripts/control.js
     env:
       ACTION: order/assert-delivered
+
+# TODAY (#142): the count comes from the backend's history (earlier runs may have added more today).
+- extendedWaitUntil:
+    visible:
+      id: today-completed
+      text: '[0-9]+\+? deliver(y|ies) completed today'
+    timeout: 20000
+
+# HISTORY (#142): the delivery just completed is listed, Delivered, with its recorded stage times.
+- tapOn:
+    id: tab-history
+- extendedWaitUntil:
+    visible:
+      id: history-item-${output.control.orderId}
+    timeout: 20000
+- assertVisible:
+    id: history-item-${output.control.orderId}-status
+    text: Delivered
+# Filters: not among the cancelled ones; listed again under Completed.
+- tapOn:
+    id: history-filter-cancelled
+- assertNotVisible:
+    id: history-item-${output.control.orderId}
+- tapOn:
+    id: history-filter-completed
+- extendedWaitUntil:
+    visible:
+      id: history-item-${output.control.orderId}
+    timeout: 15000
+# Detail sheet: stage times, drop-off and total from the backend.
+- tapOn:
+    id: history-item-${output.control.orderId}
+- extendedWaitUntil:
+    visible:
+      id: history-detail
+    timeout: 10000
+- assertVisible:
+    id: history-detail-status
+    text: Delivered
+- assertVisible: 'Assigned'
+- assertVisible: 'Picked up'
+- assertVisible:
+    id: history-detail-drop-off
+    text: '1 Test Street, Apt 1'
+- assertVisible:
+    id: history-detail-total
+    text: 'Order total .*'
+- tapOn:
+    id: history-detail-close
+- assertNotVisible:
+    id: history-detail

@@ -1,5 +1,5 @@
 url: ${APP_URL}
-name: Driver tabs - History and Wallet say they are coming soon, Profile shows the account and signs out
+name: Driver tabs - History has filters, Wallet says it is coming soon, Profile shows the account and signs out
 tags:
   - smoke
 ---
@@ -14,12 +14,13 @@ tags:
       id: status-card
     timeout: 20000
 
-# History and Wallet have no backend yet: honest placeholders, no invented trips or money.
+# History (#142) lists real deliveries from the backend; its filters are always there. Wallet has no
+# backend yet: an honest placeholder, no invented money.
 - tapOn:
     id: tab-history
 - extendedWaitUntil:
     visible:
-      id: history-coming-soon
+      id: history-filter-all
     timeout: 10000
 - tapOn:
     id: tab-wallet
