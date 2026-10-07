@@ -9,6 +9,7 @@ import {
   type HistoryFilter,
 } from '@/services/deliveries';
 import { fetchMyDriver, goOffline, goOnline, registerVehicle, type Driver, type RegisterVehicleRequest } from '@/services/drivers';
+import { fetchMyRatingSummary, type DriverRatingSummary } from '@/services/ratings';
 import { fetchResource, setResourceData } from '@/state/resource-cache';
 import { isOnShift } from '@/utils/driver-status';
 
@@ -52,6 +53,11 @@ export function useCompletedTodayPage() {
   return useResource<DriverHistoryPage>(COMPLETED_TODAY_KEY, () => fetchDeliveryHistory('completed', 1, COMPLETED_TODAY_PAGE), {
     staleTimeMs: 30_000,
   });
+}
+
+/** The driver's rating from customers (#144): average, count and recent comments, from the backend. */
+export function useMyRatingSummary() {
+  return useResource<DriverRatingSummary>('driver:rating-summary', fetchMyRatingSummary, { staleTimeMs: 60_000 });
 }
 
 export async function registerMyVehicle(payload: RegisterVehicleRequest): Promise<Driver> {

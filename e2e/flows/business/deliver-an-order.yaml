@@ -162,3 +162,19 @@ tags:
     id: history-detail-close
 - assertNotVisible:
     id: history-detail
+
+# RATING (#144): the driver sees their rating from customers on Today and Profile (backend numbers only).
+- tapOn:
+    id: tab-today
+- extendedWaitUntil:
+    visible:
+      id: driver-rating
+      text: '(No ratings yet|★ [0-9]\.[0-9] · [0-9]+ ratings?)'
+    timeout: 15000
+- tapOn:
+    id: tab-profile
+- extendedWaitUntil:
+    visible:
+      id: profile-rating-summary
+      text: '(No ratings yet|★ [0-9]\.[0-9] · [0-9]+ ratings?)'
+    timeout: 15000
