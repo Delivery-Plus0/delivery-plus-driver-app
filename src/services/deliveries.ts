@@ -32,3 +32,37 @@ export async function fetchCurrentDelivery(): Promise<CurrentDelivery | null> {
 export async function performDeliveryAction(deliveryId: string, action: DeliveryAction): Promise<{ id: string; status: DeliveryStatus }> {
   return apiPost<{ id: string; status: DeliveryStatus }>(`/api/deliveries/${deliveryId}/${action}`, {}, true);
 }
+
+/** GET /api/deliveries/me/history filters (delivery-service #142). */
+export type HistoryFilter = 'active' | 'completed' | 'cancelled';
+
+/** One of the signed-in driver's deliveries. No customer identity: the backend never sends it. */
+export type DriverHistoryItem = {
+  id: string;
+  orderId: string;
+  status: DeliveryStatus;
+  assignedAt: string | null;
+  /** Null for deliveries picked up before the backend recorded stage times. */
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  updatedAt: string;
+  /** Null when the backend could not load the restaurant (the row is still real). */
+  restaurant: { id: string; name: string } | null;
+  order: { items: { name: string; quantity: number }[]; totalAmount: string; dropOffAddress: string | null } | null;
+};
+
+export type DriverHistoryPage = { items: DriverHistoryItem[]; page: number; limit: number; total: number; totalPages: number };
+
+export const HISTORY_PAGE_SIZE = 20;
+
+/** The signed-in driver's deliveries, newest first. Which driver comes from the token, never from the app. */
+export async function fetchDeliveryHistory(
+  filter: HistoryFilter | null,
+  page = 1,
+  limit = HISTORY_PAGE_SIZE,
+): Promise<DriverHistoryPage> {
+  const query = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (filter) query.set('status', filter);
+  return apiGet<DriverHistoryPage>(`/api/deliveries/me/history?${query.toString()}`, true);
+}

@@ -16,7 +16,16 @@ import { useLocationSharing } from '@/hooks/use-location-sharing';
 import { ApiError } from '@/services/api';
 import type { CurrentDelivery, DeliveryStatus } from '@/services/deliveries';
 import type { Driver, DriverStatus } from '@/services/drivers';
-import { advanceDelivery, registerMyVehicle, setOnline, useCurrentDelivery, useMyDriver } from '@/state/driver';
+import {
+  COMPLETED_TODAY_PAGE,
+  advanceDelivery,
+  registerMyVehicle,
+  setOnline,
+  useCompletedTodayPage,
+  useCurrentDelivery,
+  useMyDriver,
+} from '@/state/driver';
+import { completedToday, completedTodayLabel } from '@/utils/delivery-history';
 import { deliveryProgressLabel, deliverySteps, type DeliveryStepState } from '@/utils/delivery-steps';
 import { formatMoney } from '@/utils/format';
 import {
@@ -66,6 +75,7 @@ export default function HomeScreen() {
         ) : driver.data ? (
           <>
             <StatusCard driver={driver.data} />
+            <TodaySummary />
             {isOnShift(driver.data.status) ? (
               delivery.isLoading ? (
                 <StateView icon="clock" title="Checking for a job…" testID="delivery-loading" />
@@ -93,6 +103,21 @@ export default function HomeScreen() {
         ) : null}
       </ScrollView>
     </Screen>
+  );
+}
+
+/** "N deliveries completed today", counted from the backend's history (#142). Hidden until loaded. */
+function TodaySummary() {
+  const page = useCompletedTodayPage();
+  if (!page.data) return null;
+  const label = completedTodayLabel(completedToday(page.data.items, COMPLETED_TODAY_PAGE));
+  return (
+    <View style={styles.stop}>
+      <Icon name="checkAll" size={IconSize.md} color={BrandColors.success} />
+      <ThemedText type="small" style={styles.rowText} testID="today-completed" nativeID="today-completed">
+        {label}
+      </ThemedText>
+    </View>
   );
 }
 
