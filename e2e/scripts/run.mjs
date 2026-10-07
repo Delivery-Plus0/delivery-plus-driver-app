@@ -38,7 +38,7 @@ const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 const FIXED_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
 
 const SUITES = {
-  smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml', 'smoke/04-tabs-and-profile.yaml'],
+  smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml', 'smoke/04-tabs-and-profile.yaml', 'smoke/05-profile-edit.yaml'],
   business: ['business/deliver-an-order.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
@@ -122,7 +122,22 @@ async function finishLeftoverDelivery() {
  */
 async function restoreSeedDriverState() {
   const driver = await finishLeftoverDelivery();
+  await restoreSeedProfile(driver);
   await api('POST', '/api/drivers/me/online', driver, {});
+}
+
+/**
+ * The seed's QA driver profile (#147): name, no phone, no photo, Bicycle QA-0001. The vehicle only
+ * changes while offline, so this goes offline first; callers put the driver back online if needed.
+ */
+async function restoreSeedProfile(driver) {
+  await api('PATCH', '/api/users/me', driver, { fullName: manifest.accounts.driver.fullName, phone: '' });
+  await api('DELETE', '/api/users/me/avatar', driver);
+  const me = await api('GET', '/api/drivers/me', driver);
+  if (me.vehicleType !== 'Bicycle' || me.licensePlate !== manifest.accounts.driver.plate) {
+    if (me.status === 'AVAILABLE') await api('POST', '/api/drivers/me/offline', driver, {});
+    await api('PATCH', '/api/drivers/me/vehicle', driver, { vehicleType: 'Bicycle', licensePlate: manifest.accounts.driver.plate });
+  }
 }
 
 function container(service) {
@@ -152,6 +167,11 @@ const actions = {
     const me = await api('GET', '/api/drivers/me', driver);
     if (me.status === 'AVAILABLE') await api('POST', '/api/drivers/me/offline', driver, {});
     state.orderId = null;
+  },
+  // Fixture (#147): the profile flow starts from the seed's profile, whatever an earlier run left.
+  'profile/restore': async () => {
+    const driver = await login(manifest.accounts.driver.email);
+    await restoreSeedProfile(driver);
   },
   // CUSTOMER + RESTAURANT stand-ins (no restaurant client yet): the QA customer orders and pays,
   // the QA restaurant prepares it and marks it ready. Auto-dispatch then assigns an online driver.

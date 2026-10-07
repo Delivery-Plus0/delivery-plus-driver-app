@@ -1,4 +1,4 @@
-import { ApiError, apiGet, apiPost } from '@/services/api';
+import { ApiError, apiGet, apiPatch, apiPost } from '@/services/api';
 
 /** driver-service statuses. A driver moves only OFFLINE ↔ AVAILABLE; the backend sets BUSY on assignment. */
 export type DriverStatus = 'OFFLINE' | 'AVAILABLE' | 'BUSY' | 'SUSPENDED';
@@ -9,7 +9,14 @@ export type Driver = {
   vehicleType: string;
   licensePlate: string;
   status: DriverStatus;
+  /** Set by an admin (#147); new drivers start PENDING. */
+  verificationStatus?: VerificationStatus;
+  /** The admin's note to the driver, e.g. why the review failed. */
+  verificationNote?: string | null;
+  verifiedAt?: string | null;
 };
+
+export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 
 export type RegisterVehicleRequest = {
   vehicleType: string;
@@ -39,4 +46,9 @@ export async function goOnline(): Promise<Driver> {
 /** AVAILABLE → OFFLINE. Not possible while BUSY on a delivery (409). */
 export async function goOffline(): Promise<Driver> {
   return apiPost<Driver>('/api/drivers/me/offline', {}, true);
+}
+
+/** PATCH /drivers/me/vehicle (#147): only while OFFLINE, otherwise 409. The plate is stored upper-case. */
+export async function updateVehicle(payload: RegisterVehicleRequest): Promise<Driver> {
+  return apiPatch<Driver>('/api/drivers/me/vehicle', payload, true);
 }

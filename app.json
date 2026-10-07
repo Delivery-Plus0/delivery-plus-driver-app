@@ -35,6 +35,13 @@
       ],
       "expo-secure-store",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Delivery Plus uses your photos to set your profile picture.",
+          "cameraPermission": "Delivery Plus uses your camera to take your profile picture."
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Delivery Plus Driver shares your location with the customer while you are on a delivery."
