@@ -133,6 +133,9 @@ async function restoreSeedDriverState() {
 async function restoreSeedProfile(driver) {
   await api('PATCH', '/api/users/me', driver, { fullName: manifest.accounts.driver.fullName, phone: '' });
   await api('DELETE', '/api/users/me/avatar', driver);
+  // #153: no codes left from earlier runs, so the hourly send limit never trips (test stack only).
+  const account = await api('GET', '/api/users/me', driver);
+  docker('exec', container('postgres'), 'psql', '-U', 'postgres', '-d', 'user_service', '-c', `delete from phone_verifications where "userId" = '${account.id}'`);
   const me = await api('GET', '/api/drivers/me', driver);
   if (me.vehicleType !== 'Bicycle' || me.licensePlate !== manifest.accounts.driver.plate) {
     if (me.status === 'AVAILABLE') await api('POST', '/api/drivers/me/offline', driver, {});
@@ -172,6 +175,15 @@ const actions = {
   'profile/restore': async () => {
     const driver = await login(manifest.accounts.driver.email);
     await restoreSeedProfile(driver);
+  },
+  // The code the test SMS sender (SMS_PROVIDER=test) kept for the QA driver's phone (#153); never sent anywhere.
+  'profile/read-sms-code': async () => {
+    const driver = await login(manifest.accounts.driver.email);
+    const me = await api('GET', '/api/users/me', driver);
+    const text = docker('exec', container('redis'), 'redis-cli', 'GET', `test:sms:${me.phone}`).trim();
+    const code = /(\d{6})/.exec(text)?.[1];
+    if (!code) throw new Error(`No verification code was sent to ${me.phone}`);
+    state.code = code;
   },
   // CUSTOMER + RESTAURANT stand-ins (no restaurant client yet): the QA customer orders and pays,
   // the QA restaurant prepares it and marks it ready. Auto-dispatch then assigns an online driver.

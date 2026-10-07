@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { PhoneVerificationSheet } from '@/components/phone-verification-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +24,7 @@ import { formatDateTime } from '@/utils/format';
 import { formatPhone, normalizeEgyptianMobile, PHONE_HINT } from '@/utils/phone';
 import { ratingSummaryLabel, starsText } from '@/utils/rating';
 
-type OpenSheet = 'photo' | 'details' | 'vehicle' | null;
+type OpenSheet = 'photo' | 'details' | 'vehicle' | 'verify' | null;
 
 /** The driver's own profile (#147): photo, name and phone (user-service), vehicle and review (driver-service), rating. */
 export default function ProfileScreen() {
@@ -75,6 +76,19 @@ export default function ProfileScreen() {
             value={profile.data?.phone ? formatPhone(profile.data.phone) : 'Not added'}
             testID="profile-phone"
           />
+          {profile.data?.phone ? (
+            profile.data.phoneVerifiedAt ? (
+              <Badge label="Phone verified" tone="success" testID="profile-phone-status" />
+            ) : (
+              <AppButton
+                testID="profile-verify-phone"
+                title="Verify phone"
+                icon="phone"
+                size="sm"
+                onPress={() => setSheet('verify')}
+              />
+            )
+          ) : null}
           <AppButton
             testID="profile-edit-details"
             title="Edit name and phone"
@@ -136,6 +150,9 @@ export default function ProfileScreen() {
 
       {sheet === 'photo' && profile.data ? <PhotoSheet profile={profile.data} onClose={() => setSheet(null)} onDone={done} /> : null}
       {sheet === 'details' && profile.data ? <DetailsSheet profile={profile.data} onClose={() => setSheet(null)} onDone={done} /> : null}
+      {sheet === 'verify' && profile.data?.phone ? (
+        <PhoneVerificationSheet phone={profile.data.phone} onClose={() => setSheet(null)} onVerified={() => done('Phone verified.')} />
+      ) : null}
       {sheet === 'vehicle' && driver.data ? <VehicleSheet driver={driver.data} onClose={() => setSheet(null)} onDone={done} /> : null}
 
       <Dialog
