@@ -1,0 +1,49 @@
+url: ${APP_URL}
+name: Arabic - the language switch shows the driver app in Arabic, remembers it across a reload, and switches back
+tags:
+  - smoke
+---
+# E2E builds start in English (EXPO_PUBLIC_DEFAULT_LOCALE=en); real drivers default to Arabic (#151).
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: driver/reset
+- runFlow: ../_shared/login.yaml
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 20000
+- tapOn:
+    id: tab-profile
+- extendedWaitUntil:
+    visible:
+      id: language-switch
+    timeout: 15000
+- tapOn:
+    id: language-ar
+- extendedWaitUntil:
+    visible: 'تسجيل الخروج'
+    timeout: 15000
+- assertVisible: 'اللغة'
+
+# The choice is remembered: a reload opens the Today tab in Arabic.
+- openLink: ${APP_URL}/home
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 20000
+- assertVisible: 'حالتك'
+- assertVisible: 'اليوم'
+
+# Back to English.
+- tapOn:
+    id: tab-profile
+- extendedWaitUntil:
+    visible:
+      id: language-en
+    timeout: 15000
+- tapOn:
+    id: language-en
+- extendedWaitUntil:
+    visible: 'Sign out'
+    timeout: 15000

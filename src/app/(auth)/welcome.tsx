@@ -6,11 +6,12 @@ import { AppButton } from '@/components/ui/app-button';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 const FEATURES: { icon: IconName; title: string; subtitle: string }[] = [
-  { icon: 'delivery', title: 'Go online when you want', subtitle: 'Jobs are assigned to you automatically' },
-  { icon: 'store', title: 'Everything for the pickup', subtitle: 'Restaurant, address and the items to collect' },
-  { icon: 'location', title: 'Straight to the door', subtitle: 'Drop-off address and notes from the customer' },
+  { icon: 'delivery', title: t('Go online when you want'), subtitle: t('Jobs are assigned to you automatically') },
+  { icon: 'store', title: t('Everything for the pickup'), subtitle: t('Restaurant, address and the items to collect') },
+  { icon: 'location', title: t('Straight to the door'), subtitle: t('Drop-off address and notes from the customer') },
 ];
 
 export default function WelcomeScreen() {
@@ -22,13 +23,13 @@ export default function WelcomeScreen() {
             source={require('@/assets/logo.png')}
             style={styles.logo}
             resizeMode="contain"
-            accessibilityLabel="Delivery Plus"
+            accessibilityLabel={t('Delivery Plus')}
           />
           <ThemedText type="title" style={styles.center} accessibilityRole="header">
-            Deliver with Delivery Plus.
+            {t('Deliver with Delivery Plus.')}
           </ThemedText>
           <ThemedText type="default" themeColor="textSecondary" style={styles.center}>
-            Go online, receive deliveries automatically, and take every order from the restaurant to the customer.
+            {t('Go online, receive deliveries automatically, and take every order from the restaurant to the customer.')}
           </ThemedText>
         </View>
 
@@ -49,8 +50,8 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.actions}>
-          <AppButton testID="welcome-register" title="Become a driver" onPress={() => router.push('/register')} />
-          <AppButton testID="welcome-login" title="I already have a driver account" variant="secondary" onPress={() => router.push('/login')} />
+          <AppButton testID="welcome-register" title={t('Become a driver')} onPress={() => router.push('/register')} />
+          <AppButton testID="welcome-login" title={t('I already have a driver account')} variant="secondary" onPress={() => router.push('/login')} />
         </View>
       </View>
     </Screen>

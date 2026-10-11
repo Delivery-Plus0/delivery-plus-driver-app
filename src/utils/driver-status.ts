@@ -1,14 +1,23 @@
 import type { DeliveryAction, DeliveryStatus } from '@/services/deliveries';
 import type { DriverStatus } from '@/services/drivers';
+import { t } from '@/i18n/core';
 
 /** Only DRIVER accounts may use this app; other roles are refused at sign-in. */
 export const DRIVER_ROLE = 'DRIVER';
 
 export const DRIVER_STATUS_LABELS: Record<DriverStatus, string> = {
-  OFFLINE: 'Offline',
-  AVAILABLE: 'Online · waiting for a job',
-  BUSY: 'On a delivery',
-  SUSPENDED: 'Suspended',
+  get OFFLINE() {
+    return t('Offline');
+  },
+  get AVAILABLE() {
+    return t('Online · waiting for a job');
+  },
+  get BUSY() {
+    return t('On a delivery');
+  },
+  get SUSPENDED() {
+    return t('Suspended');
+  },
 };
 
 /**
@@ -25,9 +34,15 @@ export function isOnShift(status: DriverStatus | undefined): boolean {
 }
 
 export const ACTION_LABELS: Record<DeliveryAction, string> = {
-  pickup: 'Picked up the order',
-  start: 'Start delivery',
-  complete: 'Mark as delivered',
+  get pickup() {
+    return t('Picked up the order');
+  },
+  get start() {
+    return t('Start delivery');
+  },
+  get complete() {
+    return t('Mark as delivered');
+  },
 };
 
 export type ActionConfirmation = { title: string; message: string; confirmLabel: string };
@@ -35,29 +50,59 @@ export type ActionConfirmation = { title: string; message: string; confirmLabel:
 /** Every driver action is one-way (the backend has no undo), so each asks for confirmation first. */
 export const ACTION_CONFIRMATIONS: Record<DeliveryAction, ActionConfirmation> = {
   pickup: {
-    title: 'Picked up the order?',
-    message: 'Confirm you have collected the order from the restaurant. The customer is told it has been picked up.',
-    confirmLabel: 'Yes, picked up',
+    get title() {
+      return t('Picked up the order?');
+    },
+    get message() {
+      return t('Confirm you have collected the order from the restaurant. The customer is told it has been picked up.');
+    },
+    get confirmLabel() {
+      return t('Yes, picked up');
+    },
   },
   start: {
-    title: 'Start the delivery?',
-    message: 'The customer is told you are on the way. This cannot be undone.',
-    confirmLabel: 'Start delivery',
+    get title() {
+      return t('Start the delivery?');
+    },
+    get message() {
+      return t('The customer is told you are on the way. This cannot be undone.');
+    },
+    get confirmLabel() {
+      return t('Start delivery');
+    },
   },
   complete: {
-    title: 'Mark as delivered?',
-    message: 'Only do this once the customer has the order. This completes the order and cannot be undone.',
-    confirmLabel: 'Mark as delivered',
+    get title() {
+      return t('Mark as delivered?');
+    },
+    get message() {
+      return t('Only do this once the customer has the order. This completes the order and cannot be undone.');
+    },
+    get confirmLabel() {
+      return t('Mark as delivered');
+    },
   },
 };
 
 export const DELIVERY_STAGE_LABELS: Record<DeliveryStatus, string> = {
-  CREATED: 'Waiting for a driver',
-  DRIVER_ASSIGNED: 'Go to the restaurant',
-  PICKED_UP: 'Order picked up',
-  IN_TRANSIT: 'On the way to the customer',
-  DELIVERED: 'Delivered',
-  CANCELLED: 'Cancelled',
+  get CREATED() {
+    return t('Waiting for a driver');
+  },
+  get DRIVER_ASSIGNED() {
+    return t('Go to the restaurant');
+  },
+  get PICKED_UP() {
+    return t('Order picked up');
+  },
+  get IN_TRANSIT() {
+    return t('On the way to the customer');
+  },
+  get DELIVERED() {
+    return t('Delivered');
+  },
+  get CANCELLED() {
+    return t('Cancelled');
+  },
 };
 
 /** The single next step the driver can take, as the backend reports it (`nextActions`). */

@@ -10,6 +10,7 @@ import type { EarningEntry } from '@/services/earnings';
 import { useMyEarnings } from '@/state/driver';
 import { formatDateTime, formatMoney } from '@/utils/format';
 import { earningStatus, earningTypeLabel, settlementNote } from '@/utils/wallet';
+import { t } from '@/i18n';
 
 /**
  * Wallet (#146): the driver's earnings exactly as the backend ledger reports them (#145). Every
@@ -20,7 +21,7 @@ export default function WalletScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Wallet" />
+      <ScreenHeader title={t('Wallet')} />
       {earnings.isLoading ? (
         <StateView icon="clock" title="Loading your earnings…" testID="wallet-loading" />
       ) : earnings.error && earnings.data === undefined ? (
@@ -31,7 +32,7 @@ export default function WalletScreen() {
           refreshControl={<RefreshControl refreshing={earnings.refreshing} onRefresh={() => void earnings.refresh()} />}>
           <Card testID="wallet-summary">
             <ThemedText type="caption" themeColor="textSecondary">
-              Available
+              {t('Available')}
             </ThemedText>
             <ThemedText type="title" testID="wallet-available" nativeID="wallet-available">
               {formatMoney(earnings.data.available)}
@@ -39,7 +40,7 @@ export default function WalletScreen() {
             <View style={styles.row}>
               <View style={styles.flex}>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  Pending
+                  {t('Pending')}
                 </ThemedText>
                 <ThemedText type="defaultBold" testID="wallet-pending" nativeID="wallet-pending">
                   {formatMoney(earnings.data.pending)}
@@ -47,7 +48,7 @@ export default function WalletScreen() {
               </View>
               <View style={styles.flex}>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  Total earned
+                  {t('Total earned')}
                 </ThemedText>
                 <ThemedText type="defaultBold" testID="wallet-balance" nativeID="wallet-balance">
                   {formatMoney(earnings.data.balance)}
@@ -55,21 +56,21 @@ export default function WalletScreen() {
               </View>
             </View>
             <ThemedText type="small" themeColor="textSecondary" style={styles.note} testID="wallet-settlement" nativeID="wallet-settlement">
-              {settlementNote(earnings.data.settlementHours)} Payouts to a bank account are not available yet.
+              {settlementNote(earnings.data.settlementHours)} {t('Payouts to a bank account are not available yet.')}
             </ThemedText>
           </Card>
 
           {earnings.data.entries.length === 0 ? (
             <StateView
               icon="wallet"
-              title="No earnings yet"
-              message="You earn a share of the delivery fee for every delivery you complete."
+              title={t('No earnings yet')}
+              message={t('You earn a share of the delivery fee for every delivery you complete.')}
               testID="wallet-empty"
             />
           ) : (
             <Card testID="wallet-entries">
               <ThemedText type="smallBold" accessibilityRole="header">
-                Recent earnings
+                {t('Recent earnings')}
               </ThemedText>
               {earnings.data.entries.map((entry, index) => (
                 <EntryRow key={entry.id} entry={entry} first={index === 0} />
@@ -90,7 +91,7 @@ function EntryRow({ entry, first }: { entry: EarningEntry; first: boolean }) {
       <View style={styles.flex}>
         <ThemedText type="default">{earningTypeLabel(entry)}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {entry.status === 'PENDING' ? `Available ${formatDateTime(entry.availableAt)}` : formatDateTime(entry.createdAt)}
+          {entry.status === 'PENDING' ? t('Available {date}', { date: formatDateTime(entry.availableAt) }) : formatDateTime(entry.createdAt)}
         </ThemedText>
       </View>
       <View style={styles.amount}>

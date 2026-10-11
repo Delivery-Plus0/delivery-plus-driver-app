@@ -12,6 +12,7 @@ import { ApiError } from '@/services/api';
 import { registerAccount } from '@/services/auth';
 import { setSession } from '@/services/session';
 import { PHONE_HINT, normalizeEgyptianMobile, phoneError } from '@/utils/phone';
+import { t } from '@/i18n';
 
 type Field = 'fullName' | 'email' | 'phone' | 'password';
 
@@ -30,13 +31,13 @@ export default function RegisterScreen() {
 
   // Mirrors auth-service RegisterDto.
   const errors: Record<Field, string | undefined> = {
-    fullName: fullName.trim() ? undefined : 'Full name is required',
-    email: !email.trim() ? 'Email is required' : !emailPattern.test(email.trim()) ? 'Enter a valid email' : undefined,
+    fullName: fullName.trim() ? undefined : t('Full name is required'),
+    email: !email.trim() ? t('Email is required') : !emailPattern.test(email.trim()) ? t('Enter a valid email') : undefined,
     phone: phoneError(phone),
     password: !password
-      ? 'Password is required'
+      ? t('Password is required')
       : password.length < 8
-        ? 'Password must be at least 8 characters'
+        ? t('Password must be at least 8 characters')
         : undefined,
   };
   const visibleError = (field: Field) => (submitted || touched[field] ? errors[field] : undefined);
@@ -60,7 +61,7 @@ export default function RegisterScreen() {
       await setSession(auth.accessToken);
       router.replace('/home');
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Unable to create your account right now.');
+      setError(caught instanceof ApiError ? caught.message : t('Unable to create your account right now.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,16 +69,16 @@ export default function RegisterScreen() {
 
   return (
     <AuthFormShell
-      title="Become a driver"
-      subtitle="Create your driver account, then register your vehicle to start delivering."
+      title={t('Become a driver')}
+      subtitle={t('Create your driver account, then register your vehicle to start delivering.')}
       footer={
         <>
           <ThemedText type="small" themeColor="textSecondary">
-            Already have an account?
+            {t('Already have an account?')}
           </ThemedText>
           <Link href="/login" replace asChild>
             <Pressable accessibilityRole="link" hitSlop={8}>
-              <ThemedText type="linkPrimary">Sign in</ThemedText>
+              <ThemedText type="linkPrimary">{t('Sign in')}</ThemedText>
             </Pressable>
           </Link>
         </>
@@ -85,12 +86,12 @@ export default function RegisterScreen() {
     >
       <FormTextInput
         testID="register-full-name"
-        label="Full name"
+        label={t('Full name')}
         value={fullName}
         onChangeText={setFullName}
         onBlur={markTouched('fullName')}
         error={visibleError('fullName')}
-        placeholder="Jane Driver"
+        placeholder={t('Jane Driver')}
         autoCapitalize="words"
         autoComplete="name"
         textContentType="name"
@@ -101,12 +102,12 @@ export default function RegisterScreen() {
       <FormTextInput
         testID="register-email"
         ref={emailRef}
-        label="Email"
+        label={t('Email')}
         value={email}
         onChangeText={setEmail}
         onBlur={markTouched('email')}
         error={visibleError('email')}
-        placeholder="you@example.com"
+        placeholder={t('you@example.com')}
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="email"
@@ -119,13 +120,13 @@ export default function RegisterScreen() {
       <FormTextInput
         testID="register-phone"
         ref={phoneRef}
-        label="Phone"
+        label={t('Phone')}
         value={phone}
         onChangeText={setPhone}
         onBlur={markTouched('phone')}
         error={visibleError('phone')}
-        hint={PHONE_HINT}
-        placeholder="Optional"
+        hint={t(PHONE_HINT)}
+        placeholder={t('Optional')}
         keyboardType="phone-pad"
         autoComplete="tel"
         textContentType="telephoneNumber"
@@ -136,12 +137,12 @@ export default function RegisterScreen() {
       <FormTextInput
         testID="register-password"
         ref={passwordRef}
-        label="Password"
+        label={t('Password')}
         value={password}
         onChangeText={setPassword}
         onBlur={markTouched('password')}
         error={visibleError('password')}
-        hint="At least 8 characters"
+        hint={t('At least 8 characters')}
         secureTextEntry
         autoComplete="new-password"
         textContentType="newPassword"
@@ -155,7 +156,7 @@ export default function RegisterScreen() {
         </View>
       ) : null}
 
-      <AppButton testID="register-submit" title="Create driver account" onPress={() => void handleSubmit()} loading={isSubmitting} />
+      <AppButton testID="register-submit" title={t('Create driver account')} onPress={() => void handleSubmit()} loading={isSubmitting} />
     </AuthFormShell>
   );
 }
