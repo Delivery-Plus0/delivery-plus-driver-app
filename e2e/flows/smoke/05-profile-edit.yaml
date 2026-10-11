@@ -1,5 +1,5 @@
 url: ${APP_URL}
-name: Driver profile - review status, name and phone (normalized), and the vehicle changes only while offline
+name: Driver profile - review status, name and phone (normalized and verified by code), and the vehicle changes only while offline
 tags:
   - smoke
 ---
@@ -51,6 +51,34 @@ tags:
 - assertVisible:
     id: profile-phone
     text: '\+20 101 234 5678'
+
+# Verify the new phone with the texted code (#153; the test stack keeps it instead of texting it).
+- tapOn:
+    id: profile-verify-phone
+- extendedWaitUntil:
+    visible:
+      id: verify-sheet
+    timeout: 10000
+- tapOn:
+    id: verify-send
+- extendedWaitUntil:
+    visible:
+      id: verify-sent
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: profile/read-sms-code
+- tapOn:
+    id: verify-code
+- inputText: ${output.control.code}
+- tapOn:
+    id: verify-submit
+- extendedWaitUntil:
+    visible:
+      id: profile-phone-status
+    timeout: 15000
+- assertVisible: 'Phone verified\.'
 
 # Vehicle: offline, so it can change; the plate is stored upper-case.
 - tapOn:

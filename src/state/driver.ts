@@ -16,7 +16,10 @@ import {
   createAvatarUploadUrl,
   fetchMyProfile,
   removeMyAvatar,
+  startPhoneVerification,
   updateMyProfile,
+  verifyPhone,
+  type PhoneVerificationStarted,
   type UpdateProfileRequest,
   type UserProfile,
 } from '@/services/users';
@@ -105,6 +108,18 @@ export async function changeMyAvatar(source: 'library' | 'camera'): Promise<User
 
 export async function removeMyPhoto(): Promise<UserProfile> {
   const profile = await removeMyAvatar();
+  setResourceData<UserProfile>(PROFILE_KEY, profile);
+  return profile;
+}
+
+/** Texts a verification code to the profile phone (#153). */
+export async function sendPhoneCode(): Promise<PhoneVerificationStarted> {
+  return startPhoneVerification();
+}
+
+/** Confirms the code; the verified profile is shown right away. */
+export async function confirmPhoneCode(code: string): Promise<UserProfile> {
+  const profile = await verifyPhone(code);
   setResourceData<UserProfile>(PROFILE_KEY, profile);
   return profile;
 }

@@ -1,6 +1,8 @@
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Linking, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
+import { PhoneVerificationSheet } from '@/components/phone-verification-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
@@ -25,11 +27,13 @@ import {
   useMyRatingSummary,
   useCurrentDelivery,
   useMyDriver,
+  useMyProfile,
 } from '@/state/driver';
 import { completedToday, completedTodayLabel } from '@/utils/delivery-history';
 import { ratingSummaryLabel } from '@/utils/rating';
 import { deliveryProgressLabel, deliverySteps, type DeliveryStepState } from '@/utils/delivery-steps';
 import { formatMoney } from '@/utils/format';
+import { isPhoneNotVerified } from '@/utils/phone-verification';
 import {
   ACTION_CONFIRMATIONS,
   ACTION_LABELS,
@@ -188,6 +192,10 @@ function StatusCard({ driver }: { driver: Driver }) {
   const rating = useMyRatingSummary();
   const [error, setError] = useState<string | null>(null);
   const [isSwitching, setIsSwitching] = useState(false);
+  // #153: going online can require a verified phone; the next step is offered right here.
+  const [needsVerifiedPhone, setNeedsVerifiedPhone] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const profile = useMyProfile();
   const inFlight = useRef(false);
   const online = driver.status === 'AVAILABLE';
 
@@ -196,9 +204,11 @@ function StatusCard({ driver }: { driver: Driver }) {
     inFlight.current = true;
     setIsSwitching(true);
     setError(null);
+    setNeedsVerifiedPhone(false);
     try {
       await setOnline(!online);
     } catch (caught) {
+      setNeedsVerifiedPhone(isPhoneNotVerified(caught));
       setError(errorMessage(caught, 'Unable to change your status right now.'));
     } finally {
       inFlight.current = false;
@@ -242,6 +252,24 @@ function StatusCard({ driver }: { driver: Driver }) {
         />
       )}
       {error ? <InlineAlert message={error} testID="status-error" /> : null}
+      {needsVerifiedPhone ? (
+        profile.data?.phone ? (
+          <AppButton testID="status-verify-phone" title="Verify your phone" variant="secondary" onPress={() => setVerifying(true)} />
+        ) : (
+          <AppButton testID="status-add-phone" title="Add your phone on the Profile tab" variant="secondary" onPress={() => router.navigate('/profile')} />
+        )
+      ) : null}
+      {verifying && profile.data?.phone ? (
+        <PhoneVerificationSheet
+          phone={profile.data.phone}
+          onClose={() => setVerifying(false)}
+          onVerified={() => {
+            setVerifying(false);
+            setNeedsVerifiedPhone(false);
+            setError(null);
+          }}
+        />
+      ) : null}
     </Card>
   );
 }
