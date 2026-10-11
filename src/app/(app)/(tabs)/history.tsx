@@ -22,12 +22,22 @@ import {
   mergeHistoryPages,
 } from '@/utils/delivery-history';
 import { formatDateTime, formatMoney } from '@/utils/format';
+import { t } from '@/i18n';
 
+// Getters, so the messages follow the current language (#151).
 const EMPTY_MESSAGES: Record<string, string> = {
-  all: 'Deliveries you take will be listed here.',
-  active: 'You have no delivery in progress.',
-  completed: 'Deliveries you complete will be listed here.',
-  cancelled: 'No cancelled deliveries.',
+  get all() {
+    return t('Deliveries you take will be listed here.');
+  },
+  get active() {
+    return t('You have no delivery in progress.');
+  },
+  get completed() {
+    return t('Deliveries you complete will be listed here.');
+  },
+  get cancelled() {
+    return t('No cancelled deliveries.');
+  },
 };
 
 /** History tab (#142): the driver's own deliveries from the backend, newest first. */
@@ -37,7 +47,7 @@ export default function HistoryScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="History" />
+      <ScreenHeader title={t('History')} />
       <View style={styles.filters} accessibilityRole="tablist">
         {HISTORY_FILTER_OPTIONS.map((option) => {
           const active = option.key === filter;
@@ -93,7 +103,7 @@ function HistoryList({ filter, onSelect }: { filter: HistoryFilter | null; onSel
       const next = await fetchDeliveryHistory(filter, more.length + 2);
       setMore((pages) => [...pages, next.items]);
     } catch (caught) {
-      setMoreError(caught instanceof ApiError ? caught.message : 'Could not load more deliveries.');
+      setMoreError(caught instanceof ApiError ? caught.message : t('Could not load more deliveries.'));
     } finally {
       setLoadingMore(false);
     }
@@ -107,7 +117,7 @@ function HistoryList({ filter, onSelect }: { filter: HistoryFilter | null; onSel
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={first.refreshing} onRefresh={() => void refresh()} />}>
       {items.length === 0 ? (
-        <StateView icon="delivery" title="No deliveries yet" message={EMPTY_MESSAGES[filter ?? 'all']} testID="history-empty" />
+        <StateView icon="delivery" title={t('No deliveries yet')} message={EMPTY_MESSAGES[filter ?? 'all']} testID="history-empty" />
       ) : (
         <>
           <ThemedText type="small" themeColor="textSecondary" testID="history-count" nativeID="history-count">
@@ -118,7 +128,7 @@ function HistoryList({ filter, onSelect }: { filter: HistoryFilter | null; onSel
           ))}
           {moreError ? <InlineAlert message={moreError} testID="history-more-error" /> : null}
           {items.length < total ? (
-            <AppButton testID="history-load-more" title="Load more" variant="secondary" onPress={() => void loadMore()} loading={loadingMore} />
+            <AppButton testID="history-load-more" title={t('Load more')} variant="secondary" onPress={() => void loadMore()} loading={loadingMore} />
           ) : null}
         </>
       )}
@@ -130,11 +140,11 @@ function HistoryRow({ item, onPress }: { item: DriverHistoryItem; onPress: () =>
   const status = historyStatus(item);
   const testID = `history-item-${item.orderId}`;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityHint="Shows the delivery details" testID={testID} nativeID={testID}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityHint={t('Shows the delivery details')} testID={testID} nativeID={testID}>
       <Card>
         <View style={styles.row}>
           <View style={styles.rowText}>
-            <ThemedText type="defaultBold">{item.restaurant?.name ?? 'Restaurant unavailable'}</ThemedText>
+            <ThemedText type="defaultBold">{item.restaurant?.name ?? t('Restaurant unavailable')}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {formatDateTime(finishedAt(item))}
               {item.order ? ` · ${formatMoney(item.order.totalAmount)}` : ''}
@@ -177,13 +187,13 @@ function HistoryDetail({ item }: { item: DriverHistoryItem }) {
       {item.order ? (
         <View style={styles.section}>
           <ThemedText type="caption" themeColor="textSecondary">
-            Drop-off
+            {t('Drop-off')}
           </ThemedText>
           <ThemedText type="small" testID="history-detail-drop-off" nativeID="history-detail-drop-off">
-            {item.order.dropOffAddress ?? 'No address on this order'}
+            {item.order.dropOffAddress ?? t('No address on this order')}
           </ThemedText>
           <ThemedText type="caption" themeColor="textSecondary" style={styles.sectionLabel}>
-            Items
+            {t('Items')}
           </ThemedText>
           {item.order.items.map((line, index) => (
             <ThemedText key={`${line.name}-${index}`} type="small">
@@ -191,11 +201,11 @@ function HistoryDetail({ item }: { item: DriverHistoryItem }) {
             </ThemedText>
           ))}
           <ThemedText type="smallBold" testID="history-detail-total" nativeID="history-detail-total">
-            Order total {formatMoney(item.order.totalAmount)}
+            {t('Order total {total}', { total: formatMoney(item.order.totalAmount) })}
           </ThemedText>
         </View>
       ) : (
-        <InlineAlert message="Order details are unavailable right now." testID="history-detail-unavailable" />
+        <InlineAlert message={t('Order details are unavailable right now.')} testID="history-detail-unavailable" />
       )}
     </>
   );

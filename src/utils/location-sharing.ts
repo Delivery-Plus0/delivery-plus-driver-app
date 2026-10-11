@@ -1,4 +1,5 @@
 import type { DeliveryStatus } from '@/services/deliveries';
+import { t } from '@/i18n/core';
 
 export type Position = {
   latitude: number;
@@ -16,11 +17,21 @@ export type LocationSharingState = 'off' | 'starting' | 'sharing' | 'denied' | '
 export const LOCATION_INTERVAL_MS = 10_000;
 
 export const LOCATION_SHARING_LABELS: Record<LocationSharingState, string> = {
-  off: 'Location sharing is off',
-  starting: 'Starting location sharing…',
-  sharing: 'Sharing your location with the customer',
-  denied: 'Location access is off. Allow it so the customer can follow the delivery.',
-  unavailable: 'Your location is unavailable right now. Retrying…',
+  get off() {
+    return t('Location sharing is off');
+  },
+  get starting() {
+    return t('Starting location sharing…');
+  },
+  get sharing() {
+    return t('Sharing your location with the customer');
+  },
+  get denied() {
+    return t('Location access is off. Allow it so the customer can follow the delivery.');
+  },
+  get unavailable() {
+    return t('Your location is unavailable right now. Retrying…');
+  },
 };
 
 /** The customer can follow the driver from assignment until the order is handed over. */

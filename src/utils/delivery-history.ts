@@ -1,11 +1,12 @@
 import type { BadgeTone } from '@/components/ui/badge';
 import type { DriverHistoryItem, HistoryFilter } from '@/services/deliveries';
+import { t } from '@/i18n/core';
 
 export const HISTORY_FILTER_OPTIONS: { key: HistoryFilter | null; label: string; testID: string }[] = [
-  { key: null, label: 'All', testID: 'history-filter-all' },
-  { key: 'active', label: 'Active', testID: 'history-filter-active' },
-  { key: 'completed', label: 'Completed', testID: 'history-filter-completed' },
-  { key: 'cancelled', label: 'Cancelled', testID: 'history-filter-cancelled' },
+  { key: null, get label() { return t('All'); }, testID: 'history-filter-all' },
+  { key: 'active', get label() { return t('Active'); }, testID: 'history-filter-active' },
+  { key: 'completed', get label() { return t('Completed'); }, testID: 'history-filter-completed' },
+  { key: 'cancelled', get label() { return t('Cancelled'); }, testID: 'history-filter-cancelled' },
 ];
 
 /** How a history row's status reads: finished outcomes, or "In progress" for the current job. */
@@ -16,7 +17,7 @@ export function historyStatus(item: Pick<DriverHistoryItem, 'status'>): { label:
     case 'CANCELLED':
       return { label: 'Cancelled', tone: 'danger' };
     default:
-      return { label: 'In progress', tone: 'brand' };
+      return { label: t('In progress'), tone: 'brand' };
   }
 }
 
@@ -28,10 +29,10 @@ export function finishedAt(item: DriverHistoryItem): string {
 /** The stage times the backend recorded, in order; stages without a time are left out, never guessed. */
 export function historyTimeline(item: DriverHistoryItem): { label: string; at: string }[] {
   const stages: [string, string | null][] = [
-    ['Assigned', item.assignedAt],
-    ['Picked up', item.pickedUpAt],
-    ['Delivered', item.deliveredAt],
-    ['Cancelled', item.cancelledAt],
+    [t('Assigned'), item.assignedAt],
+    [t('Picked up'), item.pickedUpAt],
+    [t('Delivered'), item.deliveredAt],
+    [t('Cancelled'), item.cancelledAt],
   ];
   return stages.flatMap(([label, at]) => (at ? [{ label, at }] : []));
 }
@@ -41,7 +42,7 @@ export function deliveryDuration(item: DriverHistoryItem): string | null {
   if (!item.assignedAt || !item.deliveredAt) return null;
   const minutes = Math.round((new Date(item.deliveredAt).getTime() - new Date(item.assignedAt).getTime()) / 60_000);
   if (!Number.isFinite(minutes) || minutes < 0) return null;
-  return minutes < 1 ? 'Took under a minute' : `Took ${minutes} min`;
+  return minutes < 1 ? t('Took under a minute') : t('Took {minutes} min', { minutes });
 }
 
 /** Joins loaded pages; a row can move between pages while new deliveries finish, so keep its first copy. */
@@ -63,7 +64,7 @@ export function completedToday(items: DriverHistoryItem[], pageSize: number, now
 }
 
 export function completedTodayLabel({ count, atLeast }: { count: number; atLeast: boolean }): string {
-  if (count === 0) return 'No deliveries completed yet today';
-  const n = atLeast ? `${count}+` : String(count);
-  return `${n} ${count === 1 && !atLeast ? 'delivery' : 'deliveries'} completed today`;
+  if (count === 0) return t('No deliveries completed yet today');
+  if (count === 1 && !atLeast) return t('1 delivery completed today');
+  return t('{n} deliveries completed today', { n: atLeast ? `${count}+` : String(count) });
 }

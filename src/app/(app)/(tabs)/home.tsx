@@ -45,6 +45,7 @@ import {
 } from '@/utils/driver-status';
 import { LOCATION_SHARING_LABELS, shouldShareLocation, type LocationSharingState } from '@/utils/location-sharing';
 import { directionsUrl } from '@/utils/maps';
+import { t } from '@/i18n';
 
 const STATUS_TONES: Record<DriverStatus, BadgeTone> = {
   OFFLINE: 'neutral',
@@ -68,7 +69,7 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Today" subtitle={todayLabel()} />
+      <ScreenHeader title={t('Today')} subtitle={todayLabel()} />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={driver.refreshing || delivery.refreshing} onRefresh={() => void refreshAll()} />}>
@@ -92,16 +93,16 @@ export default function HomeScreen() {
               ) : (
                 <StateView
                   icon="delivery"
-                  title="Waiting for a job"
-                  message="New deliveries are assigned to you automatically. This screen checks every few seconds."
+                  title={t('Waiting for a job')}
+                  message={t('New deliveries are assigned to you automatically. This screen checks every few seconds.')}
                   testID="waiting-for-job"
                 />
               )
             ) : driver.data.status === 'OFFLINE' ? (
               <StateView
                 icon="offline"
-                title="You're offline"
-                message="Go online to receive deliveries. Jobs are assigned automatically to drivers who are online, and this screen shows the next one as soon as it is yours."
+                title={t("You're offline")}
+                message={t('Go online to receive deliveries. Jobs are assigned automatically to drivers who are online, and this screen shows the next one as soon as it is yours.')}
                 testID="offline-guidance"
               />
             ) : null}
@@ -137,8 +138,8 @@ function VehicleForm() {
   const inFlight = useRef(false);
 
   // Mirrors driver-service RegisterDriverDto (both at least 2 characters).
-  const vehicleError = vehicleType.trim().length < 2 ? 'Enter your vehicle type (e.g. Scooter)' : undefined;
-  const plateError = licensePlate.trim().length < 2 ? 'Enter your license plate' : undefined;
+  const vehicleError = vehicleType.trim().length < 2 ? t('Enter your vehicle type (e.g. Scooter)') : undefined;
+  const plateError = licensePlate.trim().length < 2 ? t('Enter your license plate') : undefined;
 
   async function submit() {
     setSubmitted(true);
@@ -149,7 +150,7 @@ function VehicleForm() {
     try {
       await registerMyVehicle({ vehicleType: vehicleType.trim(), licensePlate: licensePlate.trim() });
     } catch (caught) {
-      setError(errorMessage(caught, 'Unable to register your vehicle right now.'));
+      setError(errorMessage(caught, t('Unable to register your vehicle right now.')));
     } finally {
       inFlight.current = false;
       setIsSubmitting(false);
@@ -159,22 +160,22 @@ function VehicleForm() {
   return (
     <Card testID="vehicle-form">
       <ThemedText type="subtitle" accessibilityRole="header">
-        Register your vehicle
+        {t('Register your vehicle')}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary" style={styles.paragraph}>
-        You need a registered vehicle before you can go online and receive deliveries.
+        {t('You need a registered vehicle before you can go online and receive deliveries.')}
       </ThemedText>
       <FormTextInput
         testID="vehicle-type"
-        label="Vehicle type"
+        label={t('Vehicle type')}
         value={vehicleType}
         onChangeText={setVehicleType}
         error={submitted ? vehicleError : undefined}
-        placeholder="Scooter, Car, Bicycle…"
+        placeholder={t('Scooter, Car, Bicycle…')}
       />
       <FormTextInput
         testID="license-plate"
-        label="License plate"
+        label={t('License plate')}
         value={licensePlate}
         onChangeText={setLicensePlate}
         error={submitted ? plateError : undefined}
@@ -183,7 +184,7 @@ function VehicleForm() {
         onSubmitEditing={() => void submit()}
       />
       {error ? <InlineAlert message={error} testID="vehicle-error" /> : null}
-      <AppButton testID="register-vehicle" title="Register vehicle" onPress={() => void submit()} loading={isSubmitting} />
+      <AppButton testID="register-vehicle" title={t('Register vehicle')} onPress={() => void submit()} loading={isSubmitting} />
     </Card>
   );
 }
@@ -209,7 +210,7 @@ function StatusCard({ driver }: { driver: Driver }) {
       await setOnline(!online);
     } catch (caught) {
       setNeedsVerifiedPhone(isPhoneNotVerified(caught));
-      setError(errorMessage(caught, 'Unable to change your status right now.'));
+      setError(errorMessage(caught, t('Unable to change your status right now.')));
     } finally {
       inFlight.current = false;
       setIsSwitching(false);
@@ -224,7 +225,7 @@ function StatusCard({ driver }: { driver: Driver }) {
             {driver.vehicleType} · {driver.licensePlate}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Your status
+            {t('Your status')}
           </ThemedText>
           {rating.data ? (
             <ThemedText type="small" testID="driver-rating" nativeID="driver-rating">
@@ -236,16 +237,16 @@ function StatusCard({ driver }: { driver: Driver }) {
       </View>
       {driver.status === 'BUSY' ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.paragraph}>
-          You go back online automatically when this delivery is completed.
+          {t('You go back online automatically when this delivery is completed.')}
         </ThemedText>
       ) : driver.status === 'SUSPENDED' ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.paragraph}>
-          Your account is suspended. Contact support to be reinstated.
+          {t('Your account is suspended. Contact support to be reinstated.')}
         </ThemedText>
       ) : (
         <AppButton
           testID={online ? 'go-offline' : 'go-online'}
-          title={online ? 'Go offline' : 'Go online'}
+          title={online ? t('Go offline') : t('Go online')}
           variant={online ? 'secondary' : 'primary'}
           onPress={() => void toggle()}
           loading={isSwitching}
@@ -254,9 +255,9 @@ function StatusCard({ driver }: { driver: Driver }) {
       {error ? <InlineAlert message={error} testID="status-error" /> : null}
       {needsVerifiedPhone ? (
         profile.data?.phone ? (
-          <AppButton testID="status-verify-phone" title="Verify your phone" variant="secondary" onPress={() => setVerifying(true)} />
+          <AppButton testID="status-verify-phone" title={t('Verify your phone')} variant="secondary" onPress={() => setVerifying(true)} />
         ) : (
-          <AppButton testID="status-add-phone" title="Add your phone on the Profile tab" variant="secondary" onPress={() => router.navigate('/profile')} />
+          <AppButton testID="status-add-phone" title={t('Add your phone on the Profile tab')} variant="secondary" onPress={() => router.navigate('/profile')} />
         )
       ) : null}
       {verifying && profile.data?.phone ? (
@@ -293,7 +294,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
       await advanceDelivery(delivery.id, action);
     } catch (caught) {
       // Delivery actions are retry-safe on the server, so pressing again after a failure is safe.
-      setError(errorMessage(caught, 'That did not go through. Check your connection and try again.'));
+      setError(errorMessage(caught, t('That did not go through. Check your connection and try again.')));
     } finally {
       inFlight.current = false;
       setIsActing(false);
@@ -304,7 +305,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
     <Card testID="current-delivery">
       <View style={styles.row}>
         <ThemedText type="subtitle" accessibilityRole="header" style={styles.rowText}>
-          Current delivery
+          {t('Current delivery')}
         </ThemedText>
         <Badge label={DELIVERY_STAGE_LABELS[delivery.status]} tone="brand" testID="delivery-stage" />
       </View>
@@ -312,7 +313,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
 
       <Stop
         icon="store"
-        label="Pickup"
+        label={t('Pickup')}
         title={delivery.pickup.name}
         detail={delivery.pickup.address}
         mapsUrl={directionsUrl({ address: [delivery.pickup.name, delivery.pickup.address].filter(Boolean).join(', ') })}
@@ -320,8 +321,8 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
       />
       <Stop
         icon="location"
-        label="Drop-off"
-        title={delivery.dropOff.address ?? 'No address on this order'}
+        label={t('Drop-off')}
+        title={delivery.dropOff.address ?? t('No address on this order')}
         detail={delivery.dropOff.notes ?? undefined}
         mapsUrl={directionsUrl(delivery.dropOff)}
         testID="drop-off"
@@ -335,7 +336,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
           </ThemedText>
         ))}
         <ThemedText type="smallBold" testID="order-total">
-          Total {formatMoney(delivery.order.totalAmount)}
+          {t('Total {total}', { total: formatMoney(delivery.order.totalAmount) })}
         </ThemedText>
       </View>
 
@@ -418,12 +419,12 @@ function Stop({ icon, label, title, detail, mapsUrl, testID }: StopProps) {
       {mapsUrl ? (
         <AppButton
           testID={`${testID}-maps`}
-          title="Directions"
+          title={t('Directions')}
           icon="directions"
           variant="ghost"
           size="sm"
           fullWidth={false}
-          accessibilityHint={`Opens your maps app with directions to the ${label.toLowerCase()}`}
+          accessibilityHint={t('Opens your maps app with directions to {place}', { place: label })}
           onPress={() => void Linking.openURL(mapsUrl)}
         />
       ) : null}

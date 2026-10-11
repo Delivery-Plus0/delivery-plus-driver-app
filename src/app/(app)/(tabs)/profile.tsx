@@ -11,6 +11,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { FormTextInput } from '@/components/ui/form-text-input';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { InlineAlert } from '@/components/ui/inline-alert';
+import { LanguageSwitch } from '@/components/ui/language-switch';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
@@ -23,6 +24,7 @@ import { canEditVehicle, detailsProblems, VERIFICATION_META, vehicleProblems } f
 import { formatDateTime } from '@/utils/format';
 import { formatPhone, normalizeEgyptianMobile, PHONE_HINT } from '@/utils/phone';
 import { ratingSummaryLabel, starsText } from '@/utils/rating';
+import { t } from '@/i18n';
 
 type OpenSheet = 'photo' | 'details' | 'vehicle' | 'verify' | null;
 
@@ -45,7 +47,7 @@ export default function ProfileScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Profile" />
+      <ScreenHeader title={t('Profile')} />
       <ScrollView contentContainerStyle={styles.content}>
         {notice ? <InlineAlert tone="success" message={notice} onDismiss={() => setNotice(null)} testID="profile-notice" /> : null}
 
@@ -72,17 +74,17 @@ export default function ProfileScreen() {
         <Card testID="profile-details">
           <Row
             icon="phone"
-            label="Phone"
-            value={profile.data?.phone ? formatPhone(profile.data.phone) : 'Not added'}
+            label={t('Phone')}
+            value={profile.data?.phone ? formatPhone(profile.data.phone) : t('Not added')}
             testID="profile-phone"
           />
           {profile.data?.phone ? (
             profile.data.phoneVerifiedAt ? (
-              <Badge label="Phone verified" tone="success" testID="profile-phone-status" />
+              <Badge label={t('Phone verified')} tone="success" testID="profile-phone-status" />
             ) : (
               <AppButton
                 testID="profile-verify-phone"
-                title="Verify phone"
+                title={t('Verify phone')}
                 icon="phone"
                 size="sm"
                 onPress={() => setSheet('verify')}
@@ -91,7 +93,7 @@ export default function ProfileScreen() {
           ) : null}
           <AppButton
             testID="profile-edit-details"
-            title="Edit name and phone"
+            title={t('Edit name and phone')}
             icon="edit"
             variant="secondary"
             size="sm"
@@ -103,22 +105,22 @@ export default function ProfileScreen() {
         <Card testID="profile-vehicle">
           <Row
             icon="delivery"
-            label="Vehicle"
+            label={t('Vehicle')}
             value={
               driver.data
                 ? `${driver.data.vehicleType} · ${driver.data.licensePlate}`
                 : driver.data === null
-                  ? 'Not registered yet. Register it on the Today tab.'
+                  ? t('Not registered yet. Register it on the Today tab.')
                   : '…'
             }
             testID="profile-vehicle-value"
           />
           {driver.data ? (
             canEditVehicle(driver.data.status) ? (
-              <AppButton testID="profile-edit-vehicle" title="Change vehicle" icon="edit" variant="secondary" size="sm" onPress={() => setSheet('vehicle')} />
+              <AppButton testID="profile-edit-vehicle" title={t('Change vehicle')} icon="edit" variant="secondary" size="sm" onPress={() => setSheet('vehicle')} />
             ) : (
               <ThemedText type="caption" themeColor="textSecondary" testID="profile-vehicle-locked" nativeID="profile-vehicle-locked">
-                Go offline on the Today tab to change your vehicle.
+                {t('Go offline on the Today tab to change your vehicle.')}
               </ThemedText>
             )
           ) : null}
@@ -127,7 +129,7 @@ export default function ProfileScreen() {
         {rating.data ? (
           <Card testID="profile-rating">
             <ThemedText type="caption" themeColor="textSecondary">
-              Rating from customers
+              {t('Rating from customers')}
             </ThemedText>
             <ThemedText type="defaultBold" testID="profile-rating-summary" nativeID="profile-rating-summary">
               {ratingSummaryLabel(rating.data)}
@@ -145,21 +147,24 @@ export default function ProfileScreen() {
             ))}
           </Card>
         ) : null}
-        <AppButton testID="sign-out" title="Sign out" icon="logout" variant="secondary" onPress={() => setConfirmingSignOut(true)} />
+        <Card testID="profile-language">
+          <LanguageSwitch />
+        </Card>
+        <AppButton testID="sign-out" title={t('Sign out')} icon="logout" variant="secondary" onPress={() => setConfirmingSignOut(true)} />
       </ScrollView>
 
       {sheet === 'photo' && profile.data ? <PhotoSheet profile={profile.data} onClose={() => setSheet(null)} onDone={done} /> : null}
       {sheet === 'details' && profile.data ? <DetailsSheet profile={profile.data} onClose={() => setSheet(null)} onDone={done} /> : null}
       {sheet === 'verify' && profile.data?.phone ? (
-        <PhoneVerificationSheet phone={profile.data.phone} onClose={() => setSheet(null)} onVerified={() => done('Phone verified.')} />
+        <PhoneVerificationSheet phone={profile.data.phone} onClose={() => setSheet(null)} onVerified={() => done(t('Phone verified.'))} />
       ) : null}
       {sheet === 'vehicle' && driver.data ? <VehicleSheet driver={driver.data} onClose={() => setSheet(null)} onDone={done} /> : null}
 
       <Dialog
         visible={confirmingSignOut}
-        title="Sign out?"
-        message="You can sign back in at any time."
-        confirmLabel="Sign out"
+        title={t('Sign out?')}
+        message={t('You can sign back in at any time.')}
+        confirmLabel={t('Sign out')}
         destructive
         onConfirm={() => {
           setConfirmingSignOut(false);
@@ -173,7 +178,7 @@ export default function ProfileScreen() {
 }
 
 function errorMessage(caught: unknown): string {
-  return caught instanceof ApiError || caught instanceof Error ? caught.message : 'That did not go through. Try again.';
+  return caught instanceof ApiError || caught instanceof Error ? caught.message : t('That did not go through. Try again.');
 }
 
 /** Photo: customers see it on the driver card once a delivery is assigned. */
@@ -196,17 +201,17 @@ function PhotoSheet({ profile, onClose, onDone }: { profile: UserProfile; onClos
   }
 
   return (
-    <Sheet visible title="Profile photo" onClose={onClose} testID="photo-sheet">
+    <Sheet visible title={t('Profile photo')} onClose={onClose} testID="photo-sheet">
       <ThemedText type="small" themeColor="textSecondary">
-        Customers see your photo with your first name and vehicle when you deliver their order.
+        {t('Customers see your photo with your first name and vehicle when you deliver their order.')}
       </ThemedText>
       {error ? <InlineAlert message={error} testID="photo-error" /> : null}
-      <AppButton testID="photo-library" title="Choose from library" icon="person" loading={busy} onPress={() => void run(() => changeMyAvatar('library'), 'Photo updated.')} />
+      <AppButton testID="photo-library" title={t('Choose from library')} icon="person" loading={busy} onPress={() => void run(() => changeMyAvatar('library'), 'Photo updated.')} />
       {Platform.OS !== 'web' ? (
-        <AppButton testID="photo-camera" title="Take a photo" variant="secondary" disabled={busy} onPress={() => void run(() => changeMyAvatar('camera'), 'Photo updated.')} />
+        <AppButton testID="photo-camera" title={t('Take a photo')} variant="secondary" disabled={busy} onPress={() => void run(() => changeMyAvatar('camera'), 'Photo updated.')} />
       ) : null}
       {profile.avatarUrl ? (
-        <AppButton testID="photo-remove" title="Remove photo" variant="danger" disabled={busy} onPress={() => void run(() => removeMyPhoto(), 'Photo removed.')} />
+        <AppButton testID="photo-remove" title={t('Remove photo')} variant="danger" disabled={busy} onPress={() => void run(() => removeMyPhoto(), 'Photo removed.')} />
       ) : null}
     </Sheet>
   );
@@ -228,7 +233,7 @@ function DetailsSheet({ profile, onClose, onDone }: { profile: UserProfile; onCl
     try {
       // The backend normalizes too (#152); a blank phone removes it.
       await saveMyProfile({ fullName: fullName.trim(), phone: phone.trim() ? (normalizeEgyptianMobile(phone) ?? phone) : '' });
-      onDone('Details saved.');
+      onDone(t('Details saved.'));
     } catch (caught) {
       setError(errorMessage(caught));
     } finally {
@@ -237,10 +242,10 @@ function DetailsSheet({ profile, onClose, onDone }: { profile: UserProfile; onCl
   }
 
   return (
-    <Sheet visible title="Name and phone" onClose={onClose} testID="details-sheet">
+    <Sheet visible title={t('Name and phone')} onClose={onClose} testID="details-sheet">
       <FormTextInput
         testID="details-name"
-        label="Full name"
+        label={t('Full name')}
         value={fullName}
         onChangeText={setFullName}
         autoComplete="name"
@@ -248,19 +253,19 @@ function DetailsSheet({ profile, onClose, onDone }: { profile: UserProfile; onCl
       />
       <FormTextInput
         testID="details-phone"
-        label="Mobile number"
+        label={t('Mobile number')}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
         autoComplete="tel"
-        hint={PHONE_HINT}
+        hint={t(PHONE_HINT)}
         error={submitted ? problems.phone : undefined}
       />
       <ThemedText type="caption" themeColor="textSecondary">
-        Customers only see your first name. Your full name and phone stay private.
+        {t('Customers only see your first name. Your full name and phone stay private.')}
       </ThemedText>
       {error ? <InlineAlert message={error} testID="details-error" /> : null}
-      <AppButton testID="details-save" title="Save" loading={busy} onPress={() => void save()} />
+      <AppButton testID="details-save" title={t('Save')} loading={busy} onPress={() => void save()} />
     </Sheet>
   );
 }
@@ -280,7 +285,7 @@ function VehicleSheet({ driver, onClose, onDone }: { driver: Driver; onClose: ()
     setError(null);
     try {
       await updateMyVehicle({ vehicleType: vehicleType.trim(), licensePlate: licensePlate.trim() });
-      onDone('Vehicle saved.');
+      onDone(t('Vehicle saved.'));
     } catch (caught) {
       setError(errorMessage(caught));
     } finally {
@@ -289,10 +294,10 @@ function VehicleSheet({ driver, onClose, onDone }: { driver: Driver; onClose: ()
   }
 
   return (
-    <Sheet visible title="Your vehicle" onClose={onClose} testID="vehicle-sheet">
+    <Sheet visible title={t('Your vehicle')} onClose={onClose} testID="vehicle-sheet">
       <FormTextInput
         testID="vehicle-type"
-        label="Vehicle type"
+        label={t('Vehicle type')}
         value={vehicleType}
         onChangeText={setVehicleType}
         maxLength={60}
@@ -300,7 +305,7 @@ function VehicleSheet({ driver, onClose, onDone }: { driver: Driver; onClose: ()
       />
       <FormTextInput
         testID="vehicle-plate"
-        label="License plate"
+        label={t('License plate')}
         value={licensePlate}
         onChangeText={setLicensePlate}
         autoCapitalize="characters"
@@ -308,10 +313,10 @@ function VehicleSheet({ driver, onClose, onDone }: { driver: Driver; onClose: ()
         error={submitted ? problems.licensePlate : undefined}
       />
       <ThemedText type="caption" themeColor="textSecondary">
-        Customers see your vehicle and plate so they can find you.
+        {t('Customers see your vehicle and plate so they can find you.')}
       </ThemedText>
       {error ? <InlineAlert message={error} testID="vehicle-error" /> : null}
-      <AppButton testID="vehicle-save" title="Save vehicle" loading={busy} onPress={() => void save()} />
+      <AppButton testID="vehicle-save" title={t('Save vehicle')} loading={busy} onPress={() => void save()} />
     </Sheet>
   );
 }
@@ -329,7 +334,7 @@ function Avatar({ profile, onPress }: { profile: UserProfile; onPress: () => voi
       style={styles.avatar}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={profile.avatarUrl ? 'Change or remove your photo' : 'Add a profile photo'}
+      accessibilityLabel={profile.avatarUrl ? t('Change or remove your photo') : t('Add a profile photo')}
       testID="profile-avatar"
       nativeID="profile-avatar">
       {profile.avatarUrl ? (

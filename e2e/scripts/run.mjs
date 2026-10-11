@@ -38,7 +38,7 @@ const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 const FIXED_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
 
 const SUITES = {
-  smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml', 'smoke/04-tabs-and-profile.yaml', 'smoke/05-profile-edit.yaml'],
+  smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml', 'smoke/04-tabs-and-profile.yaml', 'smoke/05-profile-edit.yaml', 'smoke/06-arabic.yaml'],
   business: ['business/deliver-an-order.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
@@ -243,7 +243,7 @@ function buildWeb() {
     stdio: 'inherit',
     shell: process.platform === 'win32',
     // Maestro's web driver can't grant or fake geolocation, so the E2E build reports a fixed position.
-    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: API_URL, EXPO_PUBLIC_FIXED_LOCATION: `${FIXED_LOCATION.latitude},${FIXED_LOCATION.longitude}` },
+    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: API_URL, EXPO_PUBLIC_DEFAULT_LOCALE: process.env.E2E_LOCALE ?? 'en', EXPO_PUBLIC_FIXED_LOCATION: `${FIXED_LOCATION.latitude},${FIXED_LOCATION.longitude}` },
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
