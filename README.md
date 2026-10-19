@@ -1,8 +1,35 @@
-# Delivery Plus — Driver App
+<p align="center">
+  <img src="./identity/app-icon.png" alt="Delivery Plus app icon" width="72">
+  &nbsp;&nbsp;
+  <img src="./identity/delivery-plus-logo.png" alt="Delivery Plus" width="300">
+</p>
 
-The driver client of **Delivery Plus**, a food-delivery platform. Drivers go online, receive deliveries automatically, and take each order from the restaurant to the customer.
+<h1 align="center">Delivery Plus Driver App</h1>
+
+<p align="center">Go online, receive deliveries automatically and take each order from the restaurant to the customer.</p>
+
+<p align="center">
+  <strong>DELIVERY PLUS</strong>
+  &nbsp; × &nbsp;
+  <a href="https://expo.dev"><img src="https://img.shields.io/badge/Expo-57-000020?logo=expo&logoColor=white" alt="Built with Expo 57"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Delivery-Plus0/delivery-plus-driver-app"><img src="https://img.shields.io/badge/GitHub-Driver%20App-181717?logo=github&logoColor=white" alt="Driver app on GitHub"></a>
+  <img src="https://img.shields.io/badge/React%20Native-0.86-20232A?logo=react&logoColor=61DAFB" alt="React Native 0.86">
+  <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-ready-2E7D32" alt="Android, iOS and web">
+</p>
 
 Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, on the same foundation as the [customer app](https://github.com/Delivery-Plus0/delivery-plus-customer-app): API client, session handling, `useResource` cache and polling, UI kit, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Delivery-Plus0/delivery-plus](https://github.com/Delivery-Plus0/delivery-plus) (issue #99).
+
+## App gallery
+
+<p align="center">
+  <a href="./identity/mobile-screens.png"><img src="./identity/mobile-screens.png" alt="Four rounded phone mockups showing driver dashboard, active delivery, history and wallet" width="850"></a>
+</p>
+
+Four real screens from the running app, presented in rounded phone frames. Captured at phone width from the web build with seeded QA data.
 
 ## Features (MVP)
 
