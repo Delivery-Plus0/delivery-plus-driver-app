@@ -22,7 +22,7 @@ import {
   mergeHistoryPages,
 } from '@/utils/delivery-history';
 import { formatDateTime, formatMoney } from '@/utils/format';
-import { t } from '@/i18n';
+import { t, tn } from '@/i18n';
 
 // Getters, so the messages follow the current language (#151).
 const EMPTY_MESSAGES: Record<string, string> = {
@@ -121,7 +121,7 @@ function HistoryList({ filter, onSelect }: { filter: HistoryFilter | null; onSel
       ) : (
         <>
           <ThemedText type="small" themeColor="textSecondary" testID="history-count" nativeID="history-count">
-            {total === 1 ? '1 delivery' : `${total} deliveries`}
+            {tn(total, '{count} delivery', '{count} deliveries')}
           </ThemedText>
           {items.map((item) => (
             <HistoryRow key={item.id} item={item} onPress={() => onSelect(item)} />
