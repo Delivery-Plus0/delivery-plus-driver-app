@@ -10,6 +10,7 @@ import { InlineAlert } from '@/components/ui/inline-alert';
 import { API_BASE_URL } from '@/config/api';
 import { Spacing } from '@/constants/theme';
 import { loginAccount } from '@/services/auth';
+import { signOut } from '@/services/api';
 import { setSession } from '@/services/session';
 import { DRIVER_ROLE } from '@/utils/driver-status';
 import { describeLoginError } from '@/utils/login-errors';
@@ -43,10 +44,11 @@ export default function LoginScreen() {
       const auth = await loginAccount({ email: email.trim(), password });
       if (auth.role !== DRIVER_ROLE) {
         // The credentials are valid but this app is for drivers only; don't keep the session.
+        void signOut(auth.refreshToken);
         setError(t('This app is for drivers. Sign in with a driver account, or use the Delivery Plus customer app.'));
         return;
       }
-      await setSession(auth.accessToken);
+      await setSession(auth.accessToken, auth.refreshToken);
       router.replace('/home');
     } catch (caught) {
       const consecutiveFailures = failures + 1;

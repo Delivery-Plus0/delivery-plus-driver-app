@@ -1,6 +1,6 @@
 import type { BadgeTone } from '@/components/ui/badge';
 import type { DriverHistoryItem, HistoryFilter } from '@/services/deliveries';
-import { t } from '@/i18n/core';
+import { t, tn } from '@/i18n/core';
 
 export const HISTORY_FILTER_OPTIONS: { key: HistoryFilter | null; label: string; testID: string }[] = [
   { key: null, get label() { return t('All'); }, testID: 'history-filter-all' },
@@ -65,6 +65,5 @@ export function completedToday(items: DriverHistoryItem[], pageSize: number, now
 
 export function completedTodayLabel({ count, atLeast }: { count: number; atLeast: boolean }): string {
   if (count === 0) return t('No deliveries completed yet today');
-  if (count === 1 && !atLeast) return t('1 delivery completed today');
-  return t('{n} deliveries completed today', { n: atLeast ? `${count}+` : String(count) });
+  return tn(count, '{count} delivery completed today', '{count} deliveries completed today', { count: atLeast ? `${count}+` : count });
 }

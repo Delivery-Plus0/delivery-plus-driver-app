@@ -1,3 +1,5 @@
+import type { ArabicPluralForms } from './core';
+
 /** Arabic for this app's own text (#151): English text → Arabic. The kit's strings are in kit-ar.ts. */
 export const appArabic: Readonly<Record<string, string>> = {
   // Tabs
@@ -32,8 +34,6 @@ export const appArabic: Readonly<Record<string, string>> = {
   'Took under a minute': 'استغرق أقل من دقيقة',
   'Took {minutes} min': 'استغرق {minutes} د',
   'No deliveries completed yet today': 'لم تكتمل أي توصيلات اليوم بعد',
-  '1 delivery completed today': 'توصيل واحد مكتمل اليوم',
-  '{n} deliveries completed today': '{n} توصيلات مكتملة اليوم',
 
   // Today
   'Waiting for a job': 'في انتظار طلب',
@@ -141,8 +141,6 @@ export const appArabic: Readonly<Record<string, string>> = {
   'Use at most {max} characters': 'استخدم {max} حرفًا على الأكثر',
   'Enter your full name': 'أدخل اسمك بالكامل',
   'No ratings yet': 'لا توجد تقييمات بعد',
-  '★ {average} · 1 rating': '★ {average} · تقييم واحد',
-  '★ {average} · {count} ratings': '★ {average} · {count} تقييمات',
 
   // Phone verification (#153)
   'Enter the 6 digits from the text message.': 'أدخل الأرقام الستة من الرسالة.',
@@ -167,8 +165,6 @@ export const appArabic: Readonly<Record<string, string>> = {
   Correction: 'تصحيح',
   Earning: 'ربح',
   'Earnings are available as soon as a delivery is finished.': 'تصبح الأرباح متاحة فور انتهاء التوصيل.',
-  'Earnings become available 1 hour after each delivery.': 'تصبح الأرباح متاحة بعد ساعة من كل توصيل.',
-  'Earnings become available {hours} hours after each delivery.': 'تصبح الأرباح متاحة بعد {hours} ساعة من كل توصيل.',
   'Payouts to a bank account are not available yet.': 'التحويل إلى حساب بنكي غير متاح بعد.',
 
   // Sign in and sign up
@@ -185,7 +181,7 @@ export const appArabic: Readonly<Record<string, string>> = {
   'you@example.com': 'you@example.com',
   Password: 'كلمة المرور',
   'Your password': 'كلمة المرور',
-  'Sign in': 'تسجيل الدخول',
+  'Your account is ready. Check your email for a verification code, then sign in.': 'حسابك جاهز. تحقق من بريدك الإلكتروني للحصول على رمز التحقق، ثم سجّل الدخول.',
   'Full name is required': 'الاسم بالكامل مطلوب',
   'Password must be at least 8 characters': 'يجب ألا تقل كلمة المرور عن 8 أحرف',
   'Unable to create your account right now.': 'تعذّر إنشاء حسابك الآن.',
@@ -208,4 +204,40 @@ export const appArabic: Readonly<Record<string, string>> = {
   'Go online, receive deliveries automatically, and take every order from the restaurant to the customer.':
     'اتصل، واستقبل التوصيلات تلقائيًا، وأوصل كل طلب من المطعم إلى العميل.',
   'I already have a driver account': 'لدي حساب سائق بالفعل',
+};
+
+/** #27: counted nouns for tn(), keyed by the English plural; Arabic needs all six forms. */
+export const appArabicPlurals: Readonly<Record<string, ArabicPluralForms>> = {
+  '{count} deliveries': {
+    zero: 'لا توصيلات',
+    one: 'توصيل واحد',
+    two: 'توصيلان',
+    few: '{count} توصيلات',
+    many: '{count} توصيلًا',
+    other: '{count} توصيل',
+  },
+  '{count} deliveries completed today': {
+    zero: 'لم يكتمل أي توصيل اليوم',
+    one: 'توصيل واحد مكتمل اليوم',
+    two: 'توصيلان مكتملان اليوم',
+    few: '{count} توصيلات مكتملة اليوم',
+    many: '{count} توصيلًا مكتملًا اليوم',
+    other: '{count} توصيل مكتمل اليوم',
+  },
+  '★ {average} · {count} ratings': {
+    zero: '★ {average} · لا تقييمات',
+    one: '★ {average} · تقييم واحد',
+    two: '★ {average} · تقييمان',
+    few: '★ {average} · {count} تقييمات',
+    many: '★ {average} · {count} تقييمًا',
+    other: '★ {average} · {count} تقييم',
+  },
+  'Earnings become available {count} hours after each delivery.': {
+    zero: 'تصبح الأرباح متاحة فور كل توصيل.',
+    one: 'تصبح الأرباح متاحة بعد ساعة من كل توصيل.',
+    two: 'تصبح الأرباح متاحة بعد ساعتين من كل توصيل.',
+    few: 'تصبح الأرباح متاحة بعد {count} ساعات من كل توصيل.',
+    many: 'تصبح الأرباح متاحة بعد {count} ساعة من كل توصيل.',
+    other: 'تصبح الأرباح متاحة بعد {count} ساعة من كل توصيل.',
+  },
 };

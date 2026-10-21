@@ -15,9 +15,9 @@ import { LanguageSwitch } from '@/components/ui/language-switch';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
-import { ApiError } from '@/services/api';
+import { ApiError, signOut } from '@/services/api';
 import type { Driver } from '@/services/drivers';
-import { clearSession, useAuthSession } from '@/services/session';
+import { useAuthSession } from '@/services/session';
 import type { UserProfile } from '@/services/users';
 import { changeMyAvatar, removeMyPhoto, saveMyProfile, updateMyVehicle, useMyDriver, useMyProfile, useMyRatingSummary } from '@/state/driver';
 import { canEditVehicle, detailsProblems, VERIFICATION_META, vehicleProblems } from '@/utils/driver-profile';
@@ -168,7 +168,7 @@ export default function ProfileScreen() {
         destructive
         onConfirm={() => {
           setConfirmingSignOut(false);
-          void clearSession();
+          void signOut();
         }}
         onCancel={() => setConfirmingSignOut(false)}
         testID="sign-out-dialog"

@@ -1,6 +1,6 @@
 import type { BadgeTone } from '@/components/ui/badge';
 import type { EarningEntry } from '@/services/earnings';
-import { t } from '@/i18n/core';
+import { t, tn } from '@/i18n/core';
 
 const TYPE_LABELS: Record<EarningEntry['type'], string> = {
   get DELIVERY_EARNING() {
@@ -26,5 +26,5 @@ export function earningStatus(entry: Pick<EarningEntry, 'status'>): { label: str
 /** "Earnings become available 12 hours after each delivery." from the backend's settlement window. */
 export function settlementNote(hours: number): string {
   if (hours <= 0) return t('Earnings are available as soon as a delivery is finished.');
-  return hours === 1 ? t('Earnings become available 1 hour after each delivery.') : t('Earnings become available {hours} hours after each delivery.', { hours });
+  return tn(hours, 'Earnings become available {count} hour after each delivery.', 'Earnings become available {count} hours after each delivery.');
 }
