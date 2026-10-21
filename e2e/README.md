@@ -33,11 +33,19 @@ npm run e2e:all -- --headless           # smoke + business
 
 Tear down with `npm run e2e:env:down` (in `delivery-plus`; removes the E2E volumes).
 
+**Sessions (#34).** The `session` suite stays signed in for six minutes of 60-second access tokens, then signs out. It needs a stack started with short tokens, and refuses to run otherwise:
+
+```bash
+JWT_EXPIRES_IN=60s npm run e2e:env:up   # in ../delivery-plus (or restart only auth-service with it)
+npm run e2e:session -- --headless
+```
+
 ## Suites
 
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
 | `smoke` | QA driver signs in and sees vehicle + status · goes online (waiting for a job) and offline again · a new driver signs up, registers a vehicle and lands Offline · tabs: History and Wallet are honest "coming soon" placeholders, Profile shows email + vehicle and signs out after confirming | every PR |
+| `session` | **60-second access tokens:** signed in for six minutes, reloading Wallet and Today after every token expiry (five refreshes) · sign out → welcome screen, and a reload stays signed out | every PR and nightly, after the main suite, with auth-service restarted at `JWT_EXPIRES_IN=60s` |
 | `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off, items, step progress and directions links → the app shares its location and the customer's tracking view shows it → pickup (a cancelled confirmation changes nothing), start and complete, each confirmed in the in-app dialog → back to waiting → the customer's order is DELIVERED | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)

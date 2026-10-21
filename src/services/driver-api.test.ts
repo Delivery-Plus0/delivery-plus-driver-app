@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from './api';
 import { fetchCurrentDelivery, performDeliveryAction } from './deliveries';
 import { fetchMyDriver, goOffline, goOnline, registerVehicle } from './drivers';
-import { clearSession, setSession } from './session';
+import { clearSession, getSessionSnapshot, setSession } from './session';
 import { reportLocation } from './tracking';
 
 const driverToken = [
@@ -96,5 +96,38 @@ describe('driver API', () => {
     await reportLocation({ latitude: 30.0444, longitude: 31.2357 });
     const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toEqual({ latitude: 30.0444, longitude: 31.2357 });
+  });
+});
+
+describe('a job across an expired access token (#34)', () => {
+  const renewedToken = driverToken.replace('signature', 'renewed');
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    await setSession(driverToken, 'session-1.first');
+    // The gateway: the first token has expired; /auth/refresh hands out the renewed pair.
+    fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+      if (url.endsWith('/api/auth/refresh')) return respond(200, { accessToken: renewedToken, refreshToken: 'session-1.second' });
+      if (new Headers(init.headers).get('Authorization') !== `Bearer ${renewedToken}`) return respond(401, { statusCode: 401, error: 'Unauthorized', message: 'Expired token' });
+      return url.includes('/api/deliveries/') ? respond(200, { id: 'del-1', status: 'PICKED_UP' }) : respond(201, {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(async () => {
+    vi.unstubAllGlobals();
+    await clearSession();
+  });
+
+  it('a job step and a location report both go through: one refresh, each replayed once, the driver stays signed in', async () => {
+    const [step] = await Promise.all([
+      performDeliveryAction('del-1', 'pickup'),
+      reportLocation({ latitude: 30.0444, longitude: 31.2357 }),
+    ]);
+
+    expect(step).toEqual({ id: 'del-1', status: 'PICKED_UP' });
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/api/auth/refresh'))).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(getSessionSnapshot()).toMatchObject({ ended: null, session: { token: renewedToken, refreshToken: 'session-1.second' } });
   });
 });

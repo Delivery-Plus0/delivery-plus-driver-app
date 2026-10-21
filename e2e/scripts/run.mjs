@@ -40,8 +40,13 @@ const FIXED_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
 const SUITES = {
   smoke: ['smoke/01-sign-in.yaml', 'smoke/02-online-offline.yaml', 'smoke/03-new-driver-registers-vehicle.yaml', 'smoke/04-tabs-and-profile.yaml', 'smoke/05-profile-edit.yaml', 'smoke/06-arabic.yaml'],
   business: ['business/deliver-an-order.yaml'],
+  // #34: needs the stack's access tokens at 60 s (JWT_EXPIRES_IN=60s), so it is not part of `all`.
+  session: ['session/stay-signed-in.yaml', 'session/sign-out.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
+
+/** The session suite proves refreshes only with short tokens; refuse a stack that issues long ones. */
+const SESSION_MAX_TOKEN_SECONDS = 90;
 
 if (!SUITES[suite]) {
   console.error(`Unknown suite "${suite}". Use one of: ${Object.keys(SUITES).join(', ')}`);
@@ -82,6 +87,21 @@ async function api(method, path, token, body) {
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) throw new Error(`${method} ${path} → ${res.status} ${text}`);
   return data;
+}
+
+/** Fails the session suite unless the stack's access tokens expire within SESSION_MAX_TOKEN_SECONDS. */
+async function requireShortAccessTokens() {
+  resetRateLimits();
+  const auth = await api('POST', '/api/auth/login', null, { email: manifest.accounts.driver.email, password: manifest.password });
+  const seconds = Math.round((Date.parse(auth.accessTokenExpiresAt) - Date.now()) / 1000);
+  if (!auth.refreshToken || !(seconds <= SESSION_MAX_TOKEN_SECONDS)) {
+    throw new Error(
+      `The session suite needs refresh tokens and access tokens of ${SESSION_MAX_TOKEN_SECONDS} s or less (this stack: ${Number.isFinite(seconds) ? `${seconds} s` : 'unknown'}). ` +
+        'Start the backend with `JWT_EXPIRES_IN=60s npm run e2e:env:up` (delivery-plus#244).',
+    );
+  }
+  await api('POST', '/api/auth/logout', null, { refreshToken: auth.refreshToken }).catch(() => undefined);
+  console.log(`Session suite: access tokens last ${seconds} s.`);
 }
 
 async function login(email) {
@@ -292,6 +312,8 @@ async function main() {
     (r) => { if (!r.ok) throw new Error(); },
     () => { throw new Error(`E2E gateway not reachable at ${API_URL}. Start it with \`npm run e2e:env:up\` in delivery-plus.`); },
   );
+
+  if (suite === 'session') await requireShortAccessTokens();
 
   const web = spawn(process.execPath, [join(E2E_DIR, 'scripts', 'serve-web.mjs'), WEB_BUILD, String(WEB_PORT)], { stdio: 'inherit' });
   await new Promise((r) => control.listen(CONTROL_PORT, '127.0.0.1', r));
