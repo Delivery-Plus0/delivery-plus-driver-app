@@ -42,6 +42,8 @@ const SUITES = {
   business: ['business/deliver-an-order.yaml'],
   // #34: needs the stack's access tokens at 60 s (JWT_EXPIRES_IN=60s), so it is not part of `all`.
   session: ['session/stay-signed-in.yaml', 'session/sign-out.yaml'],
+  // #58: needs EMAIL_VERIFICATION_REQUIRED=true on auth-service (backend #252), so it is not part of `all`.
+  verification: ['verification/sign-up.yaml', 'verification/unverified-sign-in.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
 
@@ -107,6 +109,39 @@ async function requireShortAccessTokens() {
 async function login(email) {
   resetRateLimits();
   return (await api('POST', '/api/auth/login', null, { email, password: manifest.password })).accessToken;
+}
+
+/**
+ * The verification suite needs the stack to require email verification: a new account must get no
+ * tokens. Refuse a stack where it is off rather than pass without testing the code screen.
+ */
+async function requireEmailVerification() {
+  resetRateLimits();
+  const probe = await api('POST', '/api/auth/register', null, {
+    email: `e2e.verify-probe.${Date.now()}@example.com`,
+    password: manifest.password,
+    fullName: 'E2E Verify Probe',
+    role: 'DRIVER',
+  });
+  if (probe?.verificationRequired !== true) {
+    if (probe?.refreshToken) await api('POST', '/api/auth/logout', null, { refreshToken: probe.refreshToken }).catch(() => undefined);
+    throw new Error(
+      'The verification suite needs email verification on. Restart auth-service with `EMAIL_VERIFICATION_REQUIRED=true` ' +
+        '(docker compose -p delivery-plus-e2e … up -d --no-deps auth-service; delivery-plus#252).',
+    );
+  }
+  console.log('Verification suite: new accounts wait for their email code.');
+}
+
+/** The code the test email sender (EMAIL_PROVIDER=test) kept for `email`; never sent anywhere. */
+function readEmailCode(email) {
+  const stored = execFileSync('docker', ['exec', container('redis'), 'redis-cli', 'GET', `test:email:${email}`], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
+  const code = stored ? /\b(\d{6})\b/.exec(JSON.parse(stored).text ?? '')?.[1] : undefined;
+  if (!code) throw new Error(`No verification email was sent to ${email}`);
+  return code;
 }
 
 const state = { orderId: null };
@@ -184,6 +219,20 @@ function resetRateLimits() {
 }
 
 const actions = {
+  // Verification suite (#58): a fresh address for this flow, never used before.
+  'verification/new-email': async () => {
+    state.newEmail = `e2e.code.${Date.now()}@example.com`;
+  },
+  // A DRIVER account for state.newEmail that waits for its code (registered through the API; no tokens).
+  'verification/register-unverified': async () => {
+    const pending = await api('POST', '/api/auth/register', null, { email: state.newEmail, password: manifest.password, fullName: 'E2E Code', role: 'DRIVER' });
+    if (pending?.verificationRequired !== true) throw new Error(`Registering ${state.newEmail} did not wait for verification`);
+  },
+  // The latest code emailed to state.newEmail, and a wrong one.
+  'verification/read-email-code': async () => {
+    state.code = readEmailCode(state.newEmail);
+    state.wrongCode = state.code === '000000' ? '111111' : '000000';
+  },
   // The QA driver starts every flow OFFLINE and free: a leftover delivery is finished first.
   'driver/reset': async () => {
     const driver = await finishLeftoverDelivery();
@@ -314,6 +363,7 @@ async function main() {
   );
 
   if (suite === 'session') await requireShortAccessTokens();
+  if (suite === 'verification') await requireEmailVerification();
 
   const web = spawn(process.execPath, [join(E2E_DIR, 'scripts', 'serve-web.mjs'), WEB_BUILD, String(WEB_PORT)], { stdio: 'inherit' });
   await new Promise((r) => control.listen(CONTROL_PORT, '127.0.0.1', r));

@@ -40,12 +40,20 @@ JWT_EXPIRES_IN=60s npm run e2e:env:up   # in ../delivery-plus (or restart only a
 npm run e2e:session -- --headless
 ```
 
+**Email verification (#58).** The `verification` suite signs up and signs in through the email-code screen. It needs auth-service to require verification (backend #252), and refuses to run otherwise. The runner reads each code from the test email sender (Redis `test:email:<address>`):
+
+```bash
+EMAIL_VERIFICATION_REQUIRED=true npm run e2e:env:up   # in ../delivery-plus (or restart only auth-service with it)
+npm run e2e:verification -- --headless
+```
+
 ## Suites
 
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
 | `smoke` | QA driver signs in and sees vehicle + status · goes online (waiting for a job) and offline again · a new driver signs up, registers a vehicle and lands Offline · tabs: History and Wallet are honest "coming soon" placeholders, Profile shows email + vehicle and signs out after confirming | every PR |
 | `session` | **60-second access tokens:** signed in for six minutes, reloading Wallet and Today after every token expiry (five refreshes) · sign out → welcome screen, and a reload stays signed out | every PR and nightly, after the main suite, with auth-service restarted at `JWT_EXPIRES_IN=60s` |
+| `verification` | **email verification on:** sign up → the code screen with the resend countdown → a wrong code is refused → the right code → sign in → the vehicle form · an unverified driver signs in → the code screen → Resend inside the minute is refused (429, countdown restarts) → after it a new code → verify → sign in → the vehicle form | every PR and nightly, after the session suite, with auth-service restarted at `EMAIL_VERIFICATION_REQUIRED=true` |
 | `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off, items, step progress and directions links → the app shares its location and the customer's tracking view shows it → pickup (a cancelled confirmation changes nothing), start and complete, each confirmed in the in-app dialog → back to waiting → the customer's order is DELIVERED | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)
