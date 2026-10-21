@@ -181,7 +181,6 @@ export const appArabic: Readonly<Record<string, string>> = {
   'you@example.com': 'you@example.com',
   Password: 'كلمة المرور',
   'Your password': 'كلمة المرور',
-  'Your account is ready. Check your email for a verification code, then sign in.': 'حسابك جاهز. تحقق من بريدك الإلكتروني للحصول على رمز التحقق، ثم سجّل الدخول.',
   'Full name is required': 'الاسم بالكامل مطلوب',
   'Password must be at least 8 characters': 'يجب ألا تقل كلمة المرور عن 8 أحرف',
   'Unable to create your account right now.': 'تعذّر إنشاء حسابك الآن.',
