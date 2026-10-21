@@ -52,7 +52,7 @@ jobs:
           ref: ${{ env.BACKEND_REF }}
           path: backend
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
