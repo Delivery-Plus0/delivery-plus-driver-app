@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { ChangePasswordSheet } from '@/components/change-password-sheet';
 import { PhoneVerificationSheet } from '@/components/phone-verification-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
@@ -26,7 +27,7 @@ import { formatPhone, normalizeEgyptianMobile, PHONE_HINT } from '@/utils/phone'
 import { ratingSummaryLabel, starsText } from '@/utils/rating';
 import { t } from '@/i18n';
 
-type OpenSheet = 'photo' | 'details' | 'vehicle' | 'verify' | null;
+type OpenSheet = 'photo' | 'details' | 'vehicle' | 'verify' | 'password' | null;
 
 /** The driver's own profile (#147): photo, name and phone (user-service), vehicle and review (driver-service), rating. */
 export default function ProfileScreen() {
@@ -150,6 +151,7 @@ export default function ProfileScreen() {
         <Card testID="profile-language">
           <LanguageSwitch />
         </Card>
+        <AppButton testID="profile-change-password" title={t('Change password')} variant="secondary" onPress={() => setSheet('password')} />
         <AppButton testID="sign-out" title={t('Sign out')} icon="logout" variant="secondary" onPress={() => setConfirmingSignOut(true)} />
       </ScrollView>
 
@@ -159,6 +161,9 @@ export default function ProfileScreen() {
         <PhoneVerificationSheet phone={profile.data.phone} onClose={() => setSheet(null)} onVerified={() => done(t('Phone verified.'))} />
       ) : null}
       {sheet === 'vehicle' && driver.data ? <VehicleSheet driver={driver.data} onClose={() => setSheet(null)} onDone={done} /> : null}
+      {sheet === 'password' ? (
+        <ChangePasswordSheet onClose={() => setSheet(null)} onChanged={() => done(t('Password changed. Your other devices were signed out.'))} />
+      ) : null}
 
       <Dialog
         visible={confirmingSignOut}
