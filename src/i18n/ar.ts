@@ -98,7 +98,6 @@ export const appArabic: Readonly<Record<string, string>> = {
   'Your location is unavailable right now. Retrying…': 'موقعك غير متاح الآن. جارٍ إعادة المحاولة…',
 
   // Profile
-  Phone: 'الموبايل',
   'Not added': 'غير مضاف',
   'Phone verified': 'تم التحقق من الموبايل',
   'Verify phone': 'تحقق من الموبايل',
@@ -143,9 +142,7 @@ export const appArabic: Readonly<Record<string, string>> = {
   'No ratings yet': 'لا توجد تقييمات بعد',
 
   // Phone verification (#153)
-  'Enter the 6 digits from the text message.': 'أدخل الأرقام الستة من الرسالة.',
   "We'll text a 6-digit code to {phone}.": 'سنرسل كودًا من 6 أرقام في رسالة إلى {phone}.',
-  'Send code': 'إرسال الكود',
   'Enter the code we sent to {phone}. It expires in 5 minutes.': 'أدخل الكود الذي أرسلناه إلى {phone}. صالح لمدة 5 دقائق.',
   Code: 'الكود',
   Verify: 'تحقق',
