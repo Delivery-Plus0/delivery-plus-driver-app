@@ -166,6 +166,7 @@ export default function ProfileScreen() {
       ) : null}
 
       <Dialog
+        icon="logout"
         visible={confirmingSignOut}
         title={t('Sign out?')}
         message={t('You can sign back in at any time.')}
@@ -259,6 +260,7 @@ function DetailsSheet({ profile, onClose, onDone }: { profile: UserProfile; onCl
       <FormTextInput
         testID="details-phone"
         label={t('Mobile number')}
+        prefix="+20"
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"

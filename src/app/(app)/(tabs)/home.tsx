@@ -9,14 +9,14 @@ import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Dialog } from '@/components/ui/dialog';
 import { FormTextInput } from '@/components/ui/form-text-input';
-import { Icon } from '@/components/ui/icon';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { ErrorState, StateView } from '@/components/ui/state-view';
-import { BrandColors, IconSize, Spacing } from '@/constants/theme';
+import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { useLocationSharing } from '@/hooks/use-location-sharing';
 import { ApiError } from '@/services/api';
-import type { CurrentDelivery, DeliveryStatus } from '@/services/deliveries';
+import type { CurrentDelivery, DeliveryAction, DeliveryStatus } from '@/services/deliveries';
 import type { Driver, DriverStatus } from '@/services/drivers';
 import {
   COMPLETED_TODAY_PAGE,
@@ -74,7 +74,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={driver.refreshing || delivery.refreshing} onRefresh={() => void refreshAll()} />}>
         {driver.isLoading ? (
-          <StateView icon="clock" title="Loading your profile…" testID="driver-loading" />
+          <StateView icon="clock" title={t('Loading your profile…')} testID="driver-loading" />
         ) : driver.error && driver.data === undefined ? (
           <ErrorState error={driver.error} onRetry={() => void driver.refresh()} />
         ) : driver.data === null ? (
@@ -85,7 +85,7 @@ export default function HomeScreen() {
             <TodaySummary />
             {isOnShift(driver.data.status) ? (
               delivery.isLoading ? (
-                <StateView icon="clock" title="Checking for a job…" testID="delivery-loading" />
+                <StateView icon="clock" title={t('Checking for a job…')} testID="delivery-loading" />
               ) : delivery.error && delivery.data === undefined ? (
                 <ErrorState error={delivery.error} onRetry={() => void delivery.refresh()} />
               ) : delivery.data ? (
@@ -199,6 +199,8 @@ function StatusCard({ driver }: { driver: Driver }) {
   const profile = useMyProfile();
   const inFlight = useRef(false);
   const online = driver.status === 'AVAILABLE';
+  // #206: only a VERIFIED driver can go online. Say why up front instead of failing on the tap.
+  const review = driver.verificationStatus && driver.verificationStatus !== 'VERIFIED' ? driver.verificationStatus : null;
 
   async function toggle() {
     if (inFlight.current || !canToggleOnline(driver.status)) return;
@@ -243,10 +245,25 @@ function StatusCard({ driver }: { driver: Driver }) {
         <ThemedText type="small" themeColor="textSecondary" style={styles.paragraph}>
           {t('Your account is suspended. Contact support to be reinstated.')}
         </ThemedText>
+      ) : review && !online ? (
+        <View style={[styles.review, review === 'REJECTED' ? styles.reviewRejected : styles.reviewPending]} testID="verification-notice" nativeID="verification-notice">
+          <Icon name={review === 'REJECTED' ? 'error' : 'clock'} size={IconSize.md} color={review === 'REJECTED' ? BrandColors.danger : BrandColors.warning} />
+          <View style={styles.rowText}>
+            <ThemedText type="smallBold">{review === 'REJECTED' ? t('Your account was not approved') : t('Your account is being reviewed')}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {review === 'REJECTED'
+                ? driver.verificationNote
+                  ? t('Reason: {note}. Contact support to fix it.', { note: driver.verificationNote })
+                  : t('Contact support to fix it.')
+                : t('You can go online once Delivery Plus verifies your account. We will let you know.')}
+            </ThemedText>
+          </View>
+        </View>
       ) : (
         <AppButton
           testID={online ? 'go-offline' : 'go-online'}
           title={online ? t('Go offline') : t('Go online')}
+          icon="power"
           variant={online ? 'secondary' : 'primary'}
           onPress={() => void toggle()}
           loading={isSwitching}
@@ -342,7 +359,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
 
       {error ? <InlineAlert message={error} testID="delivery-error" /> : null}
       {action ? (
-        <AppButton testID={`delivery-action-${action}`} title={ACTION_LABELS[action]} onPress={() => setConfirming(true)} loading={isActing} />
+        <AppButton testID={`delivery-action-${action}`} title={ACTION_LABELS[action]} icon={ACTION_ICONS[action]} onPress={() => setConfirming(true)} loading={isActing} />
       ) : null}
       {confirmation ? (
         <Dialog
@@ -350,6 +367,7 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
           title={confirmation.title}
           message={confirmation.message}
           confirmLabel={confirmation.confirmLabel}
+          icon={action ? ACTION_ICONS[action] : undefined}
           onConfirm={() => void act()}
           onCancel={() => setConfirming(false)}
           testID="delivery-confirm"
@@ -358,6 +376,9 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
     </Card>
   );
 }
+
+/** Figma D-07..D-10: each forward action carries its own icon. */
+const ACTION_ICONS: Record<DeliveryAction, IconName> = { pickup: 'bag', start: 'directions', complete: 'check' };
 
 const STEP_COLORS: Record<DeliveryStepState, string> = {
   done: BrandColors.success,
@@ -433,6 +454,20 @@ function Stop({ icon, label, title, detail, mapsUrl, testID }: StopProps) {
 }
 
 const styles = StyleSheet.create({
+  review: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.three - Spacing.one,
+    padding: Spacing.three - Spacing.one,
+    borderRadius: Radius.sm,
+    marginTop: Spacing.two,
+  },
+  reviewPending: {
+    backgroundColor: BrandColors.warningSoft,
+  },
+  reviewRejected: {
+    backgroundColor: BrandColors.dangerSoft,
+  },
   content: {
     padding: Spacing.three,
     gap: Spacing.three,
