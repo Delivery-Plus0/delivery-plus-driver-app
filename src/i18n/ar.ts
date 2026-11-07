@@ -2,6 +2,14 @@ import type { ArabicPluralForms } from './core';
 
 /** Arabic for this app's own text (#151): English text → Arabic. The kit's strings are in kit-ar.ts. */
 export const appArabic: Readonly<Record<string, string>> = {
+  // Redesign 2026
+  'Loading your profile…': 'جارٍ تحميل ملفك…',
+  'Checking for a job…': 'بنشوف لو فيه توصيلة…',
+  'Your account was not approved': 'حسابك ماتوافقش عليه',
+  'Your account is being reviewed': 'حسابك تحت المراجعة',
+  'Reason: {note}': 'السبب: {note}',
+  'Contact support to fix it.': 'كلّم الدعم عشان تصلّحه.',
+  'You can go online once Delivery Plus verifies your account. We will let you know.': 'تقدر تبدأ الشغل أول ما ديليفري بلس توثّق حسابك. هنبلّغك.',
   // Tabs
   Today: 'اليوم',
   History: 'السجل',
