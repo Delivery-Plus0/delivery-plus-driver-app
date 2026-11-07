@@ -110,6 +110,7 @@ export default function LoginScreen() {
       <FormTextInput
         testID="login-email"
         label={t('Email')}
+        icon="mail"
         value={email}
         onChangeText={edit(setEmail, { newAccount: true })}
         onBlur={() => setTouched((current) => ({ ...current, email: true }))}
@@ -128,6 +129,7 @@ export default function LoginScreen() {
         testID="login-password"
         ref={passwordRef}
         label={t('Password')}
+        icon="lock"
         value={password}
         onChangeText={edit(setPassword)}
         onBlur={() => setTouched((current) => ({ ...current, password: true }))}
