@@ -71,7 +71,7 @@ export default function HistoryScreen() {
       <HistoryList key={filter ?? 'all'} filter={filter} onSelect={setSelected} />
       <Sheet
         visible={selected !== null}
-        title={selected?.restaurant?.name ?? 'Delivery'}
+        title={selected?.restaurant?.name ?? t('Delivery')}
         onClose={() => setSelected(null)}
         testID="history-detail">
         {selected ? <HistoryDetail item={selected} /> : null}
