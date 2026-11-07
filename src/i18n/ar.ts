@@ -7,7 +7,7 @@ export const appArabic: Readonly<Record<string, string>> = {
   'Checking for a job…': 'بنشوف لو فيه توصيلة…',
   'Your account was not approved': 'حسابك ماتوافقش عليه',
   'Your account is being reviewed': 'حسابك تحت المراجعة',
-  'Reason: {note}. Contact support to fix it.': 'السبب: {note}. كلّم الدعم عشان تصلّحه.',
+  'Reason: {note}': 'السبب: {note}',
   'Contact support to fix it.': 'كلّم الدعم عشان تصلّحه.',
   'You can go online once Delivery Plus verifies your account. We will let you know.': 'تقدر تبدأ الشغل أول ما ديليفري بلس توثّق حسابك. هنبلّغك.',
   // Tabs

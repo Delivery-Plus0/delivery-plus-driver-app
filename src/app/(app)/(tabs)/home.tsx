@@ -253,7 +253,7 @@ function StatusCard({ driver }: { driver: Driver }) {
             <ThemedText type="small" themeColor="textSecondary">
               {review === 'REJECTED'
                 ? driver.verificationNote
-                  ? t('Reason: {note}. Contact support to fix it.', { note: driver.verificationNote })
+                  ? `${t('Reason: {note}', { note: driver.verificationNote.trim().replace(/[.。]+$/, '') })}. ${t('Contact support to fix it.')}`
                   : t('Contact support to fix it.')
                 : t('You can go online once Delivery Plus verifies your account. We will let you know.')}
             </ThemedText>
