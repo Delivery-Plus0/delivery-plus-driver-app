@@ -24,7 +24,7 @@ export default function WalletScreen() {
     <Screen>
       <ScreenHeader title={t('Wallet')} />
       {earnings.isLoading ? (
-        <StateView icon="clock" title="Loading your earnings…" testID="wallet-loading" />
+        <StateView icon="clock" title={t('Loading your earnings…')} testID="wallet-loading" />
       ) : earnings.error && earnings.data === undefined ? (
         <ErrorState error={earnings.error} onRetry={() => void earnings.refresh()} />
       ) : earnings.data ? (
