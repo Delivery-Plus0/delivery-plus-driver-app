@@ -386,6 +386,19 @@ const STEP_COLORS: Record<DeliveryStepState, string> = {
   upcoming: BrandColors.border,
 };
 
+// Read aloud with each progress segment; getters so they follow the current language.
+const STEP_STATE_LABELS: Record<DeliveryStepState, string> = {
+  get done() {
+    return t('Done');
+  },
+  get current() {
+    return t('Current step');
+  },
+  get upcoming() {
+    return t('Up next');
+  },
+};
+
 function StepProgress({ status }: { status: DeliveryStatus }) {
   const label = deliveryProgressLabel(status);
   return (
@@ -395,7 +408,7 @@ function StepProgress({ status }: { status: DeliveryStatus }) {
           <View
             key={step.key}
             style={[styles.progressSegment, { backgroundColor: STEP_COLORS[step.state] }]}
-            accessibilityLabel={`${step.label}: ${step.state}`}
+            accessibilityLabel={`${step.label}: ${STEP_STATE_LABELS[step.state]}`}
           />
         ))}
       </View>
