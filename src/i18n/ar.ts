@@ -2,6 +2,19 @@ import type { ArabicPluralForms } from './core';
 
 /** Arabic for this app's own text (#151): English text → Arabic. The kit's strings are in kit-ar.ts. */
 export const appArabic: Readonly<Record<string, string>> = {
+  // Redesign 2026
+  Done: 'تم',
+  'Current step': 'الخطوة الحالية',
+  'Up next': 'التالية',
+  'Loading your earnings…': 'جارٍ تحميل أرباحك…',
+  'Loading your deliveries…': 'جارٍ تحميل توصيلاتك…',
+  'Loading your profile…': 'جارٍ تحميل ملفك الشخصي…',
+  'Checking for a job…': 'جارٍ البحث عن توصيلة…',
+  'Your account was not approved': 'لم تتم الموافقة على حسابك',
+  'Your account is being reviewed': 'حسابك تحت المراجعة',
+  'Reason: {note}': 'السبب: {note}',
+  'Contact support to fix it.': 'تواصل مع الدعم لحل المشكلة.',
+  'You can go online once Delivery Plus verifies your account. We will let you know.': 'يمكنك بدء العمل بعد أن توثّق ديليفري بلس حسابك، وسنُعلمك بذلك.',
   // Tabs
   Today: 'اليوم',
   History: 'السجل',
@@ -26,7 +39,7 @@ export const appArabic: Readonly<Record<string, string>> = {
   All: 'الكل',
   Active: 'النشطة',
   Completed: 'المكتملة',
-  Cancelled: 'الملغاة',
+  Cancelled: 'ملغاة',
   'In progress': 'قيد التنفيذ',
   Assigned: 'تم التعيين',
   'Picked up': 'تم الاستلام',

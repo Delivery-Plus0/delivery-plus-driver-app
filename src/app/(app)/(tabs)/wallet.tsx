@@ -3,9 +3,10 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { ErrorState, StateView } from '@/components/ui/state-view';
-import { BrandColors, Spacing } from '@/constants/theme';
+import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import type { EarningEntry } from '@/services/earnings';
 import { useMyEarnings } from '@/state/driver';
 import { formatDateTime, formatMoney } from '@/utils/format';
@@ -23,7 +24,7 @@ export default function WalletScreen() {
     <Screen>
       <ScreenHeader title={t('Wallet')} />
       {earnings.isLoading ? (
-        <StateView icon="clock" title="Loading your earnings…" testID="wallet-loading" />
+        <StateView icon="clock" title={t('Loading your earnings…')} testID="wallet-loading" />
       ) : earnings.error && earnings.data === undefined ? (
         <ErrorState error={earnings.error} onRetry={() => void earnings.refresh()} />
       ) : earnings.data ? (
@@ -55,9 +56,13 @@ export default function WalletScreen() {
                 </ThemedText>
               </View>
             </View>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.note} testID="wallet-settlement" nativeID="wallet-settlement">
-              {settlementNote(earnings.data.settlementHours)} {t('Payouts to a bank account are not available yet.')}
-            </ThemedText>
+            {/* Figma D-14: the settlement rule as an info note. */}
+            <View style={styles.note}>
+              <Icon name="clock" size={IconSize.sm + 2} color={BrandColors.info} />
+              <ThemedText type="small" style={styles.noteText} testID="wallet-settlement" nativeID="wallet-settlement">
+                {settlementNote(earnings.data.settlementHours)} {t('Payouts to a bank account are not available yet.')}
+              </ThemedText>
+            </View>
           </Card>
 
           {earnings.data.entries.length === 0 ? (
@@ -118,7 +123,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   note: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
     marginTop: Spacing.three,
+    padding: Spacing.three - Spacing.one,
+    borderRadius: Radius.sm,
+    backgroundColor: BrandColors.infoSoft,
+  },
+  noteText: {
+    flex: 1,
+    color: BrandColors.info,
   },
   entry: {
     flexDirection: 'row',

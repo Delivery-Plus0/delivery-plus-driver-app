@@ -13,9 +13,9 @@ export const HISTORY_FILTER_OPTIONS: { key: HistoryFilter | null; label: string;
 export function historyStatus(item: Pick<DriverHistoryItem, 'status'>): { label: string; tone: BadgeTone } {
   switch (item.status) {
     case 'DELIVERED':
-      return { label: 'Delivered', tone: 'success' };
+      return { label: t('Delivered'), tone: 'success' };
     case 'CANCELLED':
-      return { label: 'Cancelled', tone: 'danger' };
+      return { label: t('Cancelled'), tone: 'danger' };
     default:
       return { label: t('In progress'), tone: 'brand' };
   }

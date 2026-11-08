@@ -5,11 +5,12 @@ import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { ErrorState, StateView } from '@/components/ui/state-view';
-import { BrandColors, Radius, Spacing } from '@/constants/theme';
+import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { ApiError } from '@/services/api';
 import { fetchDeliveryHistory, type DriverHistoryItem, type HistoryFilter } from '@/services/deliveries';
 import { useDeliveryHistory } from '@/state/driver';
@@ -71,7 +72,7 @@ export default function HistoryScreen() {
       <HistoryList key={filter ?? 'all'} filter={filter} onSelect={setSelected} />
       <Sheet
         visible={selected !== null}
-        title={selected?.restaurant?.name ?? 'Delivery'}
+        title={selected?.restaurant?.name ?? t('Delivery')}
         onClose={() => setSelected(null)}
         testID="history-detail">
         {selected ? <HistoryDetail item={selected} /> : null}
@@ -109,7 +110,7 @@ function HistoryList({ filter, onSelect }: { filter: HistoryFilter | null; onSel
     }
   }
 
-  if (first.isLoading) return <StateView icon="clock" title="Loading your deliveries…" testID="history-loading" />;
+  if (first.isLoading) return <StateView icon="clock" title={t('Loading your deliveries…')} testID="history-loading" />;
   if (first.error && first.data === undefined) return <ErrorState error={first.error} onRetry={() => void first.refresh()} />;
 
   return (
@@ -151,6 +152,8 @@ function HistoryRow({ item, onPress }: { item: DriverHistoryItem; onPress: () =>
             </ThemedText>
           </View>
           <Badge label={status.label} tone={status.tone} testID={`${testID}-status`} />
+          {/* Figma D-12: the row opens the delivery details. */}
+          <Icon name="chevronRight" size={IconSize.sm + 2} color={BrandColors.textMuted} />
         </View>
       </Card>
     </Pressable>

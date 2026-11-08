@@ -166,6 +166,7 @@ export default function ProfileScreen() {
       ) : null}
 
       <Dialog
+        icon="logout"
         visible={confirmingSignOut}
         title={t('Sign out?')}
         message={t('You can sign back in at any time.')}
@@ -259,6 +260,7 @@ function DetailsSheet({ profile, onClose, onDone }: { profile: UserProfile; onCl
       <FormTextInput
         testID="details-phone"
         label={t('Mobile number')}
+        prefix="+20"
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
@@ -317,9 +319,8 @@ function VehicleSheet({ driver, onClose, onDone }: { driver: Driver; onClose: ()
         maxLength={30}
         error={submitted ? problems.licensePlate : undefined}
       />
-      <ThemedText type="caption" themeColor="textSecondary">
-        {t('Customers see your vehicle and plate so they can find you.')}
-      </ThemedText>
+      {/* Figma D-21: why the plate matters, as an info note. */}
+      <InlineAlert tone="info" message={t('Customers see your vehicle and plate so they can find you.')} testID="vehicle-note" />
       {error ? <InlineAlert message={error} testID="vehicle-error" /> : null}
       <AppButton testID="vehicle-save" title={t('Save vehicle')} loading={busy} onPress={() => void save()} />
     </Sheet>
