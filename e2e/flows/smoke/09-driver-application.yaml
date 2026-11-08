@@ -1,0 +1,136 @@
+url: ${APP_URL}/register
+name: Driver application - a new driver applies with documents, waits for review and goes online once approved
+tags:
+  - smoke
+---
+# A fresh account and a national ID no earlier run registered.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: application/new-driver
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: register-full-name
+    timeout: 20000
+- tapOn:
+    id: register-full-name
+- inputText: QA Applicant
+- tapOn:
+    id: register-email
+- inputText: ${output.control.applicantEmail}
+- tapOn:
+    id: register-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: register-submit
+- extendedWaitUntil:
+    visible:
+      id: vehicle-form
+    timeout: 20000
+- tapOn:
+    id: vehicle-type
+- inputText: Motorcycle
+- tapOn:
+    id: license-plate
+- inputText: QA-APP
+- tapOn:
+    id: register-vehicle
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 15000
+
+# The E2E stack verifies new drivers automatically; send this one back to review, as in production.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: application/require-review
+- openLink: ${APP_URL}/home
+- extendedWaitUntil:
+    visible:
+      id: application-notice
+    timeout: 20000
+- assertVisible: 'Complete your application'
+# A new driver can't reach the online toggle before approval.
+- assertNotVisible:
+    id: go-online
+- tapOn:
+    id: application-open
+
+# The application: details first.
+- extendedWaitUntil:
+    visible:
+      id: application-details
+    timeout: 20000
+- assertVisible:
+    id: application-missing
+- tapOn:
+    id: application-national-id
+- inputText: ${output.control.nationalId}
+- tapOn:
+    id: application-driving-expiry
+- inputText: 31/05/2030
+- tapOn:
+    id: application-vehicle-expiry
+- inputText: 15/01/2029
+- tapOn:
+    id: application-save-details
+- extendedWaitUntil:
+    visible:
+      id: application-details-saved
+    timeout: 15000
+- assertVisible:
+    id: document-selfie-status
+    text: Missing
+
+# The five photos (the camera and file picker can't be driven on the web): uploaded through the app's API.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: application/upload-documents
+- openLink: ${APP_URL}/application
+- extendedWaitUntil:
+    visible:
+      id: application-ready
+    timeout: 20000
+- assertVisible:
+    id: document-selfie-status
+    text: Uploaded
+- assertNotVisible:
+    id: application-missing
+- tapOn:
+    id: application-submit
+
+# Under review: still no way to go online.
+- extendedWaitUntil:
+    visible:
+      id: application-notice
+    timeout: 20000
+- assertVisible: 'Your application is under review'
+- assertNotVisible:
+    id: go-online
+
+# Staff approve; the driver can now go online.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: application/approve
+- openLink: ${APP_URL}/home
+- extendedWaitUntil:
+    visible:
+      id: go-online
+    timeout: 20000
+- assertNotVisible:
+    id: application-notice
+- tapOn:
+    id: go-online
+- extendedWaitUntil:
+    visible:
+      id: go-offline
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: application/offline

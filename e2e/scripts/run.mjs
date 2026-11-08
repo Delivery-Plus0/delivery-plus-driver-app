@@ -47,6 +47,7 @@ const SUITES = {
     'smoke/06-arabic.yaml',
     'smoke/07-change-password.yaml',
     'smoke/08-forgot-password.yaml',
+    'smoke/09-driver-application.yaml',
   ],
   business: ['business/deliver-an-order.yaml'],
   // #34: needs the stack's access tokens at 60 s (JWT_EXPIRES_IN=60s), so it is not part of `all`.
@@ -116,6 +117,16 @@ async function requireShortAccessTokens() {
   await api('POST', '/api/auth/logout', null, { refreshToken: auth.refreshToken }).catch(() => undefined);
   console.log(`Session suite: access tokens last ${seconds} s.`);
 }
+
+/** The E2E stack's super admin (TEST_ADMIN_* in the backend's test compose overlay, delivery-plus#202). */
+const ADMIN = {
+  email: process.env.TEST_ADMIN_EMAIL || 'qa.admin@delivery-plus.test',
+  password: process.env.TEST_ADMIN_PASSWORD || 'Qa-Only-Admin-Passw0rd!',
+};
+
+/** A 1×1 PNG: real image bytes, so the backend's magic-byte check accepts it as a document photo. */
+const FIXTURE_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+const DOCUMENT_TYPES = ['national-id-front', 'national-id-back', 'driving-licence', 'vehicle-licence', 'selfie'];
 
 async function login(email) {
   resetRateLimits();
@@ -323,6 +334,55 @@ const actions = {
       if (Date.now() > deadline) throw new Error(`No driver location for delivery ${delivery.id} (got ${JSON.stringify(tracking.location)})`);
       await new Promise((r) => setTimeout(r, 1_000));
     }
+  },
+  // Application (#46): a fresh driver account, and a national ID no earlier run registered (2 + 13 digits).
+  'application/new-driver': async () => {
+    const stamp = Date.now();
+    state.applicantEmail = `qa.applicant.${stamp}@delivery-plus.test`;
+    state.nationalId = `29${String(stamp).slice(-12).padStart(12, '0')}`;
+  },
+  // Fixture: the E2E stack verifies new drivers automatically (DRIVER_AUTO_VERIFY); an admin sends this
+  // one back to review, so the driver has to apply like in production.
+  'application/require-review': async () => {
+    const driver = await login(state.applicantEmail);
+    const me = await api('GET', '/api/drivers/me', driver);
+    state.applicantDriverId = me.id;
+    const admin = (await api('POST', '/api/auth/login', null, ADMIN)).accessToken;
+    await api('PATCH', `/api/drivers/${me.id}/verification`, admin, { status: 'PENDING' });
+  },
+  // Stand-in for the camera and file picker, which Maestro web can't drive: the five document photos
+  // through the same presigned POST → storage → confirm API the app uses.
+  'application/upload-documents': async () => {
+    const driver = await login(state.applicantEmail);
+    for (const type of DOCUMENT_TYPES) {
+      const presigned = await api('POST', `/api/drivers/me/documents/${type}/upload-url`, driver, { contentType: 'image/png' });
+      const form = new FormData();
+      for (const [key, value] of Object.entries(presigned.fields)) form.append(key, value);
+      form.append('file', new Blob([FIXTURE_PNG], { type: 'image/png' }), `${type}.png`);
+      const upload = await fetch(presigned.uploadUrl, { method: 'POST', body: form });
+      if (!upload.ok) throw new Error(`Storage upload of ${type} failed: ${upload.status} ${await upload.text()}`);
+      await api('POST', `/api/drivers/me/documents/${type}/confirm`, driver, { objectKey: presigned.objectKey });
+    }
+  },
+  // STAFF stand-in (the admin console comes with Production 3): the driver can't review themself, then
+  // staff with onboarding.review approve exactly the submission the driver sent.
+  'application/approve': async () => {
+    const driver = await login(state.applicantEmail);
+    const application = await api('GET', '/api/drivers/me/application', driver);
+    if (application.status !== 'SUBMITTED') throw new Error(`Expected a submitted application, got ${application.status}`);
+    const selfReview = await api('POST', `/api/drivers/${state.applicantDriverId}/application/review`, driver, { decision: 'VERIFIED', submittedAt: application.submittedAt }).then(
+      () => 'approved',
+      (error) => error.message,
+    );
+    if (!/→ 403/.test(selfReview)) throw new Error(`The driver could review their own application: ${selfReview}`);
+    const admin = (await api('POST', '/api/auth/login', null, ADMIN)).accessToken;
+    await api('POST', `/api/drivers/${state.applicantDriverId}/application/review`, admin, { decision: 'VERIFIED', submittedAt: application.submittedAt });
+  },
+  // Cleanup: the applicant goes offline so automatic dispatch keeps assigning jobs to the QA driver.
+  'application/offline': async () => {
+    const driver = await login(state.applicantEmail);
+    const me = await api('GET', '/api/drivers/me', driver);
+    if (me.status === 'AVAILABLE') await api('POST', '/api/drivers/me/offline', driver, {});
   },
   // Cross-app assertion: the order the driver delivered in the UI is DELIVERED for the customer.
   'order/assert-delivered': async () => {

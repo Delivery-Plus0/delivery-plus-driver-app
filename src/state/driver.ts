@@ -8,7 +8,23 @@ import {
   type DriverHistoryPage,
   type HistoryFilter,
 } from '@/services/deliveries';
-import { fetchMyDriver, goOffline, goOnline, registerVehicle, updateVehicle, type Driver, type RegisterVehicleRequest } from '@/services/drivers';
+import {
+  confirmDocumentUpload,
+  createDocumentUpload,
+  fetchMyApplication,
+  fetchMyDriver,
+  goOffline,
+  goOnline,
+  registerVehicle,
+  saveMyApplication,
+  submitMyApplication,
+  updateVehicle,
+  type Driver,
+  type DriverApplication,
+  type DriverDocumentType,
+  type RegisterVehicleRequest,
+  type SaveApplicationRequest,
+} from '@/services/drivers';
 import { fetchMyEarnings, type DriverEarnings } from '@/services/earnings';
 import { fetchMyRatingSummary, type DriverRatingSummary } from '@/services/ratings';
 import {
@@ -25,6 +41,8 @@ import {
 } from '@/services/users';
 import { fetchResource, setResourceData } from '@/state/resource-cache';
 import { isOnShift } from '@/utils/driver-status';
+import { documentContentType } from '@/utils/driver-application';
+import { t } from '@/i18n/core';
 import { pickImage, uploadToPresigned } from '@/utils/image-upload';
 
 const DRIVER_KEY = 'driver:me';
@@ -33,6 +51,7 @@ const historyKey = (filter: HistoryFilter | null) => `delivery:history:${filter 
 const COMPLETED_TODAY_KEY = 'delivery:history:today';
 const EARNINGS_KEY = 'driver:earnings';
 const PROFILE_KEY = 'profile';
+const APPLICATION_KEY = 'driver:application';
 
 /** Newest completed deliveries fetched for the Today count; the backend allows up to 50 per page. */
 export const COMPLETED_TODAY_PAGE = 50;
@@ -154,3 +173,49 @@ export async function advanceDelivery(deliveryId: string, action: DeliveryAction
     void fetchResource(EARNINGS_KEY, () => fetchMyEarnings()).catch(() => undefined);
   }
 }
+
+/**
+ * The driver's application (#46, backend #207), once the vehicle is registered. Shown in full while it
+ * can be edited; read for the licence banner afterwards.
+ */
+export function useMyApplication(driver: Driver | null | undefined) {
+  return useResource<DriverApplication>(driver ? APPLICATION_KEY : null, fetchMyApplication, { staleTimeMs: 10_000 });
+}
+
+/** Saves the national ID and licence dates; the backend keeps only the ID's last 4 digits and a hash. */
+export async function saveApplicationDetails(payload: SaveApplicationRequest): Promise<DriverApplication> {
+  const application = await saveMyApplication(payload);
+  setResourceData<DriverApplication>(APPLICATION_KEY, application);
+  return application;
+}
+
+/**
+ * Photographs (camera) or picks (library) one document, uploads it straight to private storage and
+ * asks the backend to check it. Returns null when the driver cancels. Retrying after a failure starts
+ * over with a fresh upload, which is safe: only a confirmed upload becomes the document.
+ */
+export async function uploadDocument(type: DriverDocumentType, source: 'camera' | 'library'): Promise<DriverApplication | null> {
+  const picked = await pickImage(source);
+  if (!picked) return null;
+  const contentType = documentContentType(picked.mimeType);
+  if (!contentType) throw new Error(t('Choose a JPEG or PNG photo.'));
+  const presigned = await createDocumentUpload(type, contentType);
+  await uploadToPresigned(presigned, picked);
+  const application = await confirmDocumentUpload(type, presigned.objectKey);
+  setResourceData<DriverApplication>(APPLICATION_KEY, application);
+  return application;
+}
+
+/** Sends the application for review; the driver profile is refreshed too (its verification note clears). */
+export async function submitApplication(): Promise<DriverApplication> {
+  const application = await submitMyApplication();
+  setResourceData<DriverApplication>(APPLICATION_KEY, application);
+  await fetchResource(DRIVER_KEY, fetchMyDriver).catch(() => undefined);
+  return application;
+}
+
+/** Re-reads the application and the driver, e.g. when the screen opens again after a review. */
+export async function reloadApplication(): Promise<void> {
+  await Promise.all([fetchResource(APPLICATION_KEY, fetchMyApplication), fetchResource(DRIVER_KEY, fetchMyDriver)]);
+}
+

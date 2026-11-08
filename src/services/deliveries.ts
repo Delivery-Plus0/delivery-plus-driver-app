@@ -16,6 +16,9 @@ export type CurrentDelivery = {
   dropOff: { address: string | null; notes: string | null; latitude: number | null; longitude: number | null };
   order: { id: string; items: { name: string; quantity: number }[]; totalAmount: string };
   nextActions: DeliveryAction[];
+  /** #211: the customer's and the restaurant's phones while the job is active; null otherwise or unknown. */
+  customerPhone?: string | null;
+  restaurantPhone?: string | null;
 };
 
 /**

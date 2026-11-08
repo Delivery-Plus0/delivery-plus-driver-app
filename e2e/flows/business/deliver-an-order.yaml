@@ -53,6 +53,12 @@ tags:
     id: pickup-maps
 - assertVisible:
     id: drop-off-maps
+# Contact during the job (#46, backend #211): call the restaurant (its contact phone) and the customer
+# (the QA customer has a phone), shown only while the job is active.
+- assertVisible:
+    id: pickup-call
+- assertVisible:
+    id: drop-off-call
 
 # Every step is one-way, so it asks first. Cancelling changes nothing.
 - tapOn:
