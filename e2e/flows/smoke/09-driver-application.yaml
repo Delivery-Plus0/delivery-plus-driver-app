@@ -85,9 +85,10 @@ tags:
       id: document-selfie-status
       text: Missing
     direction: DOWN
+# The "Still needed" card is taller than the viewport can show whole, so scroll to its heading.
 - scrollUntilVisible:
     element:
-      id: application-missing
+      text: Still needed
     direction: DOWN
 
 # The five photos (the camera and file picker can't be driven on the web): uploaded through the app's API.
