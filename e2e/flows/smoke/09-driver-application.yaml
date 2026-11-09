@@ -64,8 +64,6 @@ tags:
     visible:
       id: application-details
     timeout: 20000
-- assertVisible:
-    id: application-missing
 - tapOn:
     id: application-national-id
 - inputText: ${output.control.nationalId}
@@ -81,9 +79,16 @@ tags:
     visible:
       id: application-details-saved
     timeout: 15000
-- assertVisible:
-    id: document-selfie-status
-    text: Missing
+# Below the fold on the web: scroll to the last document and the review card (Maestro checks on screen).
+- scrollUntilVisible:
+    element:
+      id: document-selfie-status
+      text: Missing
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      id: application-missing
+    direction: DOWN
 
 # The five photos (the camera and file picker can't be driven on the web): uploaded through the app's API.
 - runScript:
@@ -93,13 +98,23 @@ tags:
 - openLink: ${APP_URL}/application
 - extendedWaitUntil:
     visible:
-      id: application-ready
+      id: application-details
     timeout: 20000
-- assertVisible:
-    id: document-selfie-status
-    text: Uploaded
+- scrollUntilVisible:
+    element:
+      id: document-selfie-status
+      text: Uploaded
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      id: application-ready
+    direction: DOWN
 - assertNotVisible:
     id: application-missing
+- scrollUntilVisible:
+    element:
+      id: application-submit
+    direction: DOWN
 - tapOn:
     id: application-submit
 
