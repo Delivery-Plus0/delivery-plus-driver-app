@@ -79,17 +79,14 @@ tags:
     visible:
       id: application-details-saved
     timeout: 15000
-# Below the fold on the web: scroll to the last document and the review card (Maestro checks on screen).
-- scrollUntilVisible:
-    element:
-      id: document-selfie-status
-      text: Missing
-    direction: DOWN
-# The "Still needed" card is taller than the viewport can show whole, so scroll to its heading.
-- scrollUntilVisible:
-    element:
-      text: Still needed
-    direction: DOWN
+# The whole screen fits this flow's tall window (run.mjs FLOW_SCREEN_SIZES): Maestro web can't scroll
+# an inner scroll view.
+- assertVisible:
+    id: document-selfie-status
+    text: Missing
+- assertVisible: Still needed
+- assertVisible:
+    id: application-missing
 
 # The five photos (the camera and file picker can't be driven on the web): uploaded through the app's API.
 - runScript:
@@ -101,21 +98,15 @@ tags:
     visible:
       id: application-details
     timeout: 20000
-- scrollUntilVisible:
-    element:
+- extendedWaitUntil:
+    visible:
       id: document-selfie-status
       text: Uploaded
-    direction: DOWN
-- scrollUntilVisible:
-    element:
-      id: application-ready
-    direction: DOWN
+    timeout: 15000
+- assertVisible:
+    id: application-ready
 - assertNotVisible:
     id: application-missing
-- scrollUntilVisible:
-    element:
-      id: application-submit
-    direction: DOWN
 - tapOn:
     id: application-submit
 

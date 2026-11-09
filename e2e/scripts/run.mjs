@@ -8,7 +8,7 @@
 //      E2E_MANIFEST (../delivery-plus/e2e-seed-manifest.json), MAESTRO_BIN (maestro),
 //      E2E_COMPOSE_PROJECT (delivery-plus-e2e)
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +34,12 @@ const MAESTRO = process.env.MAESTRO_BIN ?? 'maestro';
 const PROJECT = process.env.E2E_COMPOSE_PROJECT ?? 'delivery-plus-e2e';
 const WEB_BUILD = join(E2E_DIR, '.web-build');
 const SCREEN_SIZE = process.env.E2E_SCREEN_SIZE ?? '430x1600';
+// Maestro web "scrolls" by dragging from the screen centre, which doesn't move an inner scroll view,
+// so a long screen gets a window tall enough to show it whole. Per flow, so negative checks elsewhere
+// keep their usual viewport.
+const FLOW_SCREEN_SIZES = {
+  'smoke/09-driver-application.yaml': '430x2300',
+};
 const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 const FIXED_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
 
@@ -444,15 +450,47 @@ function runFlow(flow) {
     '--debug-output',
     outDir,
     '--flatten-debug-output',
-    ...(flag('headless') ? ['--headless', '--screen-size', SCREEN_SIZE] : []),
+    ...(flag('headless') ? ['--headless', '--screen-size', FLOW_SCREEN_SIZES[flow] ?? SCREEN_SIZE] : []),
     ...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
   ];
   resetRateLimits();
   const started = Date.now();
   return new Promise((resolveFlow) => {
     const child = spawn(MAESTRO, maestroArgs, { stdio: 'inherit', shell: process.platform === 'win32' });
-    child.on('exit', (code) => resolveFlow({ flow, ok: code === 0, seconds: Math.round((Date.now() - started) / 1000) }));
+    child.on('exit', (code) => {
+      if (code !== 0) printFailedSteps(outDir);
+      resolveFlow({ flow, ok: code === 0, seconds: Math.round((Date.now() - started) / 1000) });
+    });
   });
+}
+
+/**
+ * The artifacts aren't always at hand (forks, expired runs), so a failed flow also prints its failed
+ * steps from Maestro's debug output: the command, the error and what was on screen (text and ids).
+ */
+function printFailedSteps(outDir) {
+  try {
+    for (const file of readdirSync(outDir).filter((name) => /^commands-.*\.json$/.test(name))) {
+      const commands = JSON.parse(readFileSync(join(outDir, file), 'utf8'));
+      for (const entry of commands.filter((item) => item?.metadata?.status === 'FAILED')) {
+        console.log(`--- failed step: ${JSON.stringify(entry.command).slice(0, 600)}`);
+        const error = entry.metadata.error ?? {};
+        console.log(`--- error: ${String(error.message ?? '').slice(0, 600)}`);
+        const seen = [];
+        const walk = (node) => {
+          if (!node) return;
+          const attributes = node.attributes ?? {};
+          const label = [attributes['resource-id'], attributes.text, attributes.bounds].filter(Boolean).join(' | ');
+          if (label && (attributes['resource-id'] || attributes.text)) seen.push(label);
+          (node.children ?? []).forEach(walk);
+        };
+        walk(error.hierarchyRoot ?? entry.metadata.hierarchy);
+        if (seen.length) console.log(`--- on screen (${seen.length}):\n    ${seen.slice(0, 150).join('\n    ')}`);
+      }
+    }
+  } catch (caught) {
+    console.log(`(no failed-step details: ${caught.message})`);
+  }
 }
 
 async function main() {
