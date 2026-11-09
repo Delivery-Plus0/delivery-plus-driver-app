@@ -26,9 +26,11 @@ import {
   useCompletedTodayPage,
   useMyRatingSummary,
   useCurrentDelivery,
+  useMyApplication,
   useMyDriver,
   useMyProfile,
 } from '@/state/driver';
+import { licenceWarning } from '@/utils/driver-application';
 import { completedToday, completedTodayLabel } from '@/utils/delivery-history';
 import { ratingSummaryLabel } from '@/utils/rating';
 import { deliveryProgressLabel, deliverySteps, type DeliveryStepState } from '@/utils/delivery-steps';
@@ -98,7 +100,8 @@ export default function HomeScreen() {
                   testID="waiting-for-job"
                 />
               )
-            ) : driver.data.status === 'OFFLINE' ? (
+            ) : driver.data.status === 'OFFLINE' && (driver.data.verificationStatus ?? 'VERIFIED') === 'VERIFIED' ? (
+              // Only for a driver who can go online; one waiting for approval sees why on the status card.
               <StateView
                 icon="offline"
                 title={t("You're offline")}
@@ -197,10 +200,14 @@ function StatusCard({ driver }: { driver: Driver }) {
   const [needsVerifiedPhone, setNeedsVerifiedPhone] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const profile = useMyProfile();
+  const application = useMyApplication(driver);
   const inFlight = useRef(false);
   const online = driver.status === 'AVAILABLE';
   // #206: only a VERIFIED driver can go online. Say why up front instead of failing on the tap.
   const review = driver.verificationStatus && driver.verificationStatus !== 'VERIFIED' ? driver.verificationStatus : null;
+  // #46: where the application stands, from the backend (#207); older backends had none.
+  const applicationStatus = application.data?.status ?? null;
+  const warning = review ? null : licenceWarning(application.data);
 
   async function toggle() {
     if (inFlight.current || !canToggleOnline(driver.status)) return;
@@ -211,6 +218,12 @@ function StatusCard({ driver }: { driver: Driver }) {
     try {
       await setOnline(!online);
     } catch (caught) {
+      // #46: the backend says the driver isn't approved (e.g. a licence just expired): show the application.
+      if (caught instanceof ApiError && caught.error === 'DriverNotVerified') {
+        void application.refresh();
+        router.push('/application');
+        return;
+      }
       setNeedsVerifiedPhone(isPhoneNotVerified(caught));
       setError(errorMessage(caught, t('Unable to change your status right now.')));
     } finally {
@@ -245,6 +258,8 @@ function StatusCard({ driver }: { driver: Driver }) {
         <ThemedText type="small" themeColor="textSecondary" style={styles.paragraph}>
           {t('Your account is suspended. Contact support to be reinstated.')}
         </ThemedText>
+      ) : review && !online && applicationStatus && applicationStatus !== 'VERIFIED' ? (
+        <ApplicationNotice status={applicationStatus} note={application.data?.lastReview?.note ?? application.data?.verificationNote ?? driver.verificationNote ?? null} />
       ) : review && !online ? (
         <View style={[styles.review, review === 'REJECTED' ? styles.reviewRejected : styles.reviewPending]} testID="verification-notice" nativeID="verification-notice">
           <Icon name={review === 'REJECTED' ? 'error' : 'clock'} size={IconSize.md} color={review === 'REJECTED' ? BrandColors.danger : BrandColors.warning} />
@@ -269,6 +284,7 @@ function StatusCard({ driver }: { driver: Driver }) {
           loading={isSwitching}
         />
       )}
+      {warning ? <InlineAlert tone="info" message={warning} testID="licence-warning" /> : null}
       {error ? <InlineAlert message={error} testID="status-error" /> : null}
       {needsVerifiedPhone ? (
         profile.data?.phone ? (
@@ -334,6 +350,8 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
         title={delivery.pickup.name}
         detail={delivery.pickup.address}
         mapsUrl={directionsUrl({ address: [delivery.pickup.name, delivery.pickup.address].filter(Boolean).join(', ') })}
+        phone={delivery.restaurantPhone}
+        callLabel={t('Call the restaurant')}
         testID="pickup"
       />
       <Stop
@@ -342,6 +360,8 @@ function DeliveryCard({ delivery }: { delivery: CurrentDelivery }) {
         title={delivery.dropOff.address ?? t('No address on this order')}
         detail={delivery.dropOff.notes ?? undefined}
         mapsUrl={directionsUrl(delivery.dropOff)}
+        phone={delivery.customerPhone}
+        callLabel={t('Call the customer')}
         testID="drop-off"
       />
       <LocationLine state={locationState} />
@@ -432,9 +452,19 @@ function LocationLine({ state }: { state: LocationSharingState }) {
   );
 }
 
-type StopProps = { icon: 'store' | 'location'; label: string; title: string; detail?: string; mapsUrl?: string | null; testID: string };
+type StopProps = {
+  icon: 'store' | 'location';
+  label: string;
+  title: string;
+  detail?: string;
+  mapsUrl?: string | null;
+  /** #46/#211: sent by the backend only while the job is active, so the button disappears with it. */
+  phone?: string | null;
+  callLabel?: string;
+  testID: string;
+};
 
-function Stop({ icon, label, title, detail, mapsUrl, testID }: StopProps) {
+function Stop({ icon, label, title, detail, mapsUrl, phone, callLabel, testID }: StopProps) {
   return (
     // nativeID too: react-native-web renders it as the HTML id that Maestro's web driver looks up.
     <View style={styles.stop} testID={testID} nativeID={testID}>
@@ -462,6 +492,54 @@ function Stop({ icon, label, title, detail, mapsUrl, testID }: StopProps) {
           onPress={() => void Linking.openURL(mapsUrl)}
         />
       ) : null}
+      {phone ? (
+        <AppButton
+          testID={`${testID}-call`}
+          title={t('Call')}
+          icon="phone"
+          variant="ghost"
+          size="sm"
+          fullWidth={false}
+          accessibilityHint={callLabel}
+          onPress={() => void Linking.openURL(`tel:${phone}`)}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * #46: the application's state on the Today tab, in place of "Go online" until Delivery Plus approves
+ * the driver. A draft or a rejected application links to the application screen.
+ */
+function ApplicationNotice({ status, note }: { status: 'DRAFT' | 'SUBMITTED' | 'REJECTED'; note: string | null }) {
+  const pending = status === 'SUBMITTED';
+  return (
+    <View style={[styles.review, status === 'REJECTED' ? styles.reviewRejected : styles.reviewPending]} testID="application-notice" nativeID="application-notice">
+      <Icon name={status === 'REJECTED' ? 'error' : pending ? 'clock' : 'edit'} size={IconSize.md} color={status === 'REJECTED' ? BrandColors.danger : BrandColors.warning} />
+      <View style={styles.rowText}>
+        <ThemedText type="smallBold">
+          {status === 'REJECTED' ? t('Your application needs changes') : pending ? t('Your application is under review') : t('Complete your application')}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary" testID={status === 'REJECTED' ? 'application-notice-note' : undefined}>
+          {status === 'REJECTED'
+            ? note ?? t('The reviewer did not leave a note.')
+            : pending
+              ? t('We will let you know when you are approved. You can go online after that.')
+              : note ?? t('Add your national ID, licence dates and document photos, then submit them for review.')}
+        </ThemedText>
+        {pending ? null : (
+          <View style={styles.noticeAction}>
+            <AppButton
+              testID="application-open"
+              title={status === 'REJECTED' ? t('Fix and submit again') : t('Continue application')}
+              size="sm"
+              fullWidth={false}
+              onPress={() => router.push('/application')}
+            />
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -480,6 +558,10 @@ const styles = StyleSheet.create({
   },
   reviewRejected: {
     backgroundColor: BrandColors.dangerSoft,
+  },
+  noticeAction: {
+    flexDirection: 'row',
+    marginTop: Spacing.two,
   },
   content: {
     padding: Spacing.three,

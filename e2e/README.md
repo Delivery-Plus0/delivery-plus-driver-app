@@ -51,10 +51,10 @@ npm run e2e:verification -- --headless
 
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
-| `smoke` | QA driver signs in and sees vehicle + status · goes online (waiting for a job) and offline again · a new driver signs up, registers a vehicle and lands Offline · tabs: History and Wallet are honest "coming soon" placeholders, Profile shows email + vehicle and signs out after confirming | every PR |
+| `smoke` | QA driver signs in and sees vehicle + status · goes online (waiting for a job) and offline again · a new driver signs up, registers a vehicle and lands Offline · tabs: History and Wallet are honest "coming soon" placeholders, Profile shows email + vehicle and signs out after confirming · **application (#46):** a new driver signs up and registers a vehicle → sent back to review → "Complete your application" and no *Go online* → national ID and licence dates saved → the five photos uploaded (through the API) → submit → "under review", still no *Go online* → approved through the API → *Go online* | every PR |
 | `session` | **60-second access tokens:** signed in for six minutes, reloading Wallet and Today after every token expiry (five refreshes) · sign out → welcome screen, and a reload stays signed out | every PR and nightly, after the main suite, with auth-service restarted at `JWT_EXPIRES_IN=60s` |
 | `verification` | **email verification on:** sign up → the code screen with the resend countdown → a wrong code is refused → the right code → sign in → the vehicle form · an unverified driver signs in → the code screen → Resend inside the minute is refused (429, countdown restarts) → after it a new code → verify → sign in → the vehicle form | every PR and nightly, after the session suite, with auth-service restarted at `EMAIL_VERIFICATION_REQUIRED=true` |
-| `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off, items, step progress and directions links → the app shares its location and the customer's tracking view shows it → pickup (a cancelled confirmation changes nothing), start and complete, each confirmed in the in-app dialog → back to waiting → the customer's order is DELIVERED | nightly / manual |
+| `business` | driver goes online → an order becomes ready → automatic dispatch assigns it → the job card shows restaurant, drop-off, items, step progress, directions links and call buttons for the restaurant and the customer → the app shares its location and the customer's tracking view shows it → pickup (a cancelled confirmation changes nothing), start and complete, each confirmed in the in-app dialog → back to waiting → the customer's order is DELIVERED | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)
 
@@ -80,6 +80,14 @@ Password: `E2E_PASSWORD` (test-only default `Qa-Only-Passw0rd!`). The customer's
 - `tracking/assert-location`: cross-app check that `GET /api/tracking/delivery/:id`, read as the
   customer, returns the position the driver app sent.
 - `order/assert-delivered`: cross-app check that the customer's order is DELIVERED.
+- `application/new-driver`, `application/require-review`: a fresh applicant and national ID; then, as
+  an **admin**, send the new driver back to review (the E2E stack verifies new drivers automatically,
+  `DRIVER_AUTO_VERIFY`).
+- `application/upload-documents`: stand-in for the camera and file picker, which Maestro web can't
+  drive: the five document photos (a real 1×1 PNG) through the app's presigned POST → confirm API.
+- `application/approve`: checks the driver can't review themself (403), then, as **staff** with
+  `onboarding.review`, approves exactly the submission sent. `application/offline` takes the
+  applicant offline afterwards so dispatch keeps using the QA driver.
 
 The web build reports a fixed position (`EXPO_PUBLIC_FIXED_LOCATION=30.0444,31.2357`, set by the
 runner) because Maestro's web driver can neither grant geolocation permission nor fake it
